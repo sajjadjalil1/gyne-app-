@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String?
+  users     User[]
+  patients  Patient[]
+  createdAt DateTime  @default(now())
+}
+
+enum Role {
+  DOCTOR
+  NURSE
+  RECEPTION
+  PATIENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  role      Role
+  name      String
+  phone     String   @unique
+  patient   Patient?
+  createdAt DateTime @default(now())
+}
+
+model Patient {
+  id             String          @id @default(cuid())
+  clinicId       String
+  clinic         Clinic          @relation(fields: [clinicId], references: [id])
+  userId         String?         @unique
+  user           User?           @relation(fields: [userId], references: [id])
+  name           String
+  phone          String
+  birthDate      DateTime
+  bloodGroup     String?
+  gravida        Int             @default(0)
+  para           Int             @default(0)
+  abortions      Int             @default(0)
+  notes          String?
+  cycleLengthAvg Int             @default(28)
+  periodLengthAvg Int            @default(5)
+  appointments   Appointment[]
+  cycleLogs      CycleLog[]
+  contraceptions Contraception[]
+  pregnancies    Pregnancy[]
+  readings       HomeReading[]
+  messages       Message[]
+  alerts         Alert[]
+  createdAt      DateTime        @default(now())
+}
+
+enum ApptType {
+  NEW_PATIENT
+  FOLLOW_UP
+  ANTENATAL
+  ULTRASOUND
+  CONTRACEPTION_REVIEW
+  IUD_INSERTION
+  IMPLANT_REMOVAL
+  PAP_SMEAR
+  POSTPARTUM
+}
+
+enum ApptStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Appointment {
+  id        String     @id @default(cuid())
+  patientId String
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  type      ApptType
+  status    ApptStatus @default(SCHEDULED)
+  startsAt  DateTime
+  minutes   Int        @default(20)
+  reason    String?
+  notes     String?
+  createdAt DateTime   @default(now())
+}
+
+enum Flow {
+  SPOTTING
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+model CycleLog {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  date      DateTime
+  bleeding  Boolean  @default(false)
+  flow      Flow?
+  pain      Int?
+  mood      String?
+  symptoms  String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([patientId, date])
+}
+
+enum ContraMethod {
+  COMBINED_PILL
+  PROGESTIN_PILL
+  PATCH
+  RING
+  INJECTION
+  IMPLANT
+  IUD_HORMONAL
+  IUD_COPPER
+  CONDOM
+  FERTILITY_AWARENESS
+  NONE
+}
+
+model Contraception {
+  id        String       @id @default(cuid())
+  patientId String
+  patient   Patient      @relation(fields: [patientId], references: [id])
+  method    ContraMethod
+  brand     String?
+  startedAt DateTime
+  expiresAt DateTime?
+  endedAt   DateTime?
+  note      String?
+  createdAt DateTime     @default(now())
+}
+
+model Pregnancy {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  lmp             DateTime?
+  usDate          DateTime?
+  usGaDays        Int?
+  eddFinal        DateTime
+  datingMethod    String
+  rhNegative      Boolean   @default(false)
+  active          Boolean   @default(true)
+  outcome         String?
+  deliveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+enum ReadingKind {
+  BP
+  WEIGHT
+  GLUCOSE
+  KICKS
+}
+
+model HomeReading {
+  id        String      @id @default(cuid())
+  patientId String
+  patient   Patient     @relation(fields: [patientId], references: [id])
+  kind      ReadingKind
+  takenAt   DateTime
+  systolic  Int?
+  diastolic Int?
+  value     Float?
+  note      String?
+  createdAt DateTime    @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  fromPatient Boolean
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+enum Severity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+model Alert {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  severity   Severity
+  kind       String
+  title      String
+  detail     String
+  resolvedAt DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  userAgent  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  meta      String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([target])
+}
