@@ -1,0 +1,20 @@
+{
+  "name": "gyne",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w apps/web",
+    "dev:mobile": "npm run start -w apps/mobile",
+    "build:web": "npm run build -w apps/web",
+    "db:generate": "npm run generate -w packages/db",
+    "db:push": "npm run push -w packages/db",
+    "db:seed": "npm run seed -w packages/db",
+    "typecheck": "npm run typecheck -w apps/web && npm run typecheck -w apps/mobile"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}
