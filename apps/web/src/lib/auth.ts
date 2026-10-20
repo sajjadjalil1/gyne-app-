@@ -1,8 +1,9 @@
 import { createHash, randomInt, randomBytes } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
-import { addMinutes, addDays } from "date-fns";
+import { addMinutes, addDays, addHours } from "date-fns";
 import { prisma, type Role } from "@gyne/db";
 import { headers, cookies } from "next/headers";
+import { rateLimited } from "./rate-limit";
 
 const secret = () => {
   const s = process.env.AUTH_SECRET;
@@ -18,6 +19,8 @@ export const sha256 = (s: string) => createHash("sha256").update(s).digest("hex"
 export const OTP_TTL_MIN = 5;
 export const OTP_MAX_ATTEMPTS = 5;
 export const SESSION_DAYS = 30;
+/** Dashboard sessions are short: a shared clinic computer must not stay signed in for weeks. */
+export const STAFF_SESSION_HOURS = 12;
 
 /** Iraqi mobile numbers: 07XXXXXXXXX (11 digits). Also accept +9647… */
 export function normalizePhone(raw: string): string | null {
@@ -27,16 +30,8 @@ export function normalizePhone(raw: string): string | null {
   return null;
 }
 
-// Simple in-memory rate limit per phone (per instance). Replace with Redis in multi-instance deployments.
-const otpRequests = new Map<string, number[]>();
-export function otpRateLimited(phone: string, now = Date.now()): boolean {
-  const windowMs = 15 * 60 * 1000;
-  const arr = (otpRequests.get(phone) ?? []).filter((t) => now - t < windowMs);
-  if (arr.length >= 3) return true;
-  arr.push(now);
-  otpRequests.set(phone, arr);
-  return false;
-}
+/** 3 codes per phone per 15 minutes. */
+export const otpRateLimited = (phone: string, now = Date.now()) => rateLimited(`otp:${phone}`, 3, 15 * 60_000, now);
 
 export async function issueOtp(phone: string): Promise<{ code: string; expiresAt: Date }> {
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
@@ -57,9 +52,9 @@ export async function verifyOtp(phone: string, code: string): Promise<boolean> {
 
 export type TokenClaims = { sub: string; role: Role; sid: string };
 
-export async function createSession(userId: string, role: Role, userAgent?: string | null): Promise<{ token: string; expiresAt: Date }> {
+export async function createSession(userId: string, role: Role, userAgent?: string | null, client: "mobile" | "web" = "mobile"): Promise<{ token: string; expiresAt: Date }> {
   const raw = randomBytes(32).toString("hex");
-  const expiresAt = addDays(new Date(), SESSION_DAYS);
+  const expiresAt = client === "web" ? addHours(new Date(), STAFF_SESSION_HOURS) : addDays(new Date(), SESSION_DAYS);
   const session = await prisma.session.create({ data: { userId, tokenHash: sha256(raw), userAgent: userAgent ?? undefined, expiresAt } });
   const token = await new SignJWT({ role, sid: session.id, k: raw })
     .setProtectedHeader({ alg: "HS256" })
@@ -72,7 +67,7 @@ export async function createSession(userId: string, role: Role, userAgent?: stri
 
 export async function verifyToken(token: string): Promise<TokenClaims | null> {
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     const sid = payload.sid as string, k = payload.k as string;
     const session = await prisma.session.findUnique({ where: { id: sid } });
     if (!session || session.revokedAt || session.expiresAt < new Date() || session.tokenHash !== sha256(k)) return null;

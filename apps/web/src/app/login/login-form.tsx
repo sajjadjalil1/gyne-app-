@@ -27,7 +27,9 @@ export function LoginForm() {
     const j = await r.json();
     setBusy(false);
     if (!r.ok) return setError(j.error ?? "الرمز غير صحيح");
-    router.replace(params.get("next") ?? "/doctor");
+    const next = params.get("next");
+    // Only same-site dashboard paths: "?next=https://evil" or "//evil" must not leave the app.
+    router.replace(next && /^\/doctor(\/|$|\?)/.test(next) ? next : "/doctor");
   }
 
   return (
