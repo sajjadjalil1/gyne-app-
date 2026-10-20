@@ -45,6 +45,15 @@ model User {
   phone     String   @unique
   patient   Patient?
   createdAt DateTime @default(now())
+
+  // Staff sign-in: password + authenticator app (TOTP). Patients never use these.
+  passwordHash   String?
+  totpSecret     String?   // AES-256-GCM encrypted base32 secret
+  totpEnabledAt  DateTime?
+  totpLastStep   Int?      // last accepted 30-second step, so a code cannot be replayed
+  recoveryCodes  String?   // JSON array of sha256 hashes, each usable once
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
 }
 
 model Patient {

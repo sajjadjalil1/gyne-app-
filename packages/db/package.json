@@ -8,7 +8,8 @@
     "generate": "prisma generate",
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "staff:reset-login": "tsx scripts/reset-staff-login.ts"
   },
   "prisma": { "seed": "tsx prisma/seed.ts" },
   "dependencies": { "@prisma/client": "6.16.2", "@gyne/core": "*" },
