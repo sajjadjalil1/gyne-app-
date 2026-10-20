@@ -8,6 +8,10 @@ const today = startOfDay(new Date());
 const at = (d: Date, h: number, m = 0) => setMinutes(setHours(d, h), m);
 
 async function main() {
+  // The seed wipes every table and creates demo accounts with known phone numbers: never on a live database.
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_SEED !== "1") {
+    throw new Error("Refusing to seed demo data in production (set ALLOW_DEMO_SEED=1 to override on a throwaway database).");
+  }
   await prisma.auditLog.deleteMany();
   await prisma.doseEvent.deleteMany();
   await prisma.prescription.deleteMany();

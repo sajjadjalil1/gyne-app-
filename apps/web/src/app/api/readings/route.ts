@@ -23,7 +23,7 @@ export const POST = handle(async (req) => {
 
 export const GET = handle(async (req) => {
   const { patient } = await requirePatient();
-  const kind = new URL(req.url).searchParams.get("kind");
-  const readings = await prisma.homeReading.findMany({ where: { patientId: patient.id, ...(kind ? { kind: kind as "BP" | "WEIGHT" | "GLUCOSE" | "KICKS" } : {}) }, orderBy: { takenAt: "desc" }, take: 60 });
+  const kind = z.enum(["BP", "WEIGHT", "GLUCOSE", "KICKS"]).nullable().catch(null).parse(new URL(req.url).searchParams.get("kind"));
+  const readings = await prisma.homeReading.findMany({ where: { patientId: patient.id, ...(kind ? { kind } : {}) }, orderBy: { takenAt: "desc" }, take: 60 });
   return json({ readings });
 });

@@ -6,8 +6,8 @@ import { audit } from "@/lib/auth";
 
 export const GET = handle(async (req) => {
   const { patient } = await requirePatient();
-  const days = Number(new URL(req.url).searchParams.get("days") ?? 120);
-  const logs = await prisma.cycleLog.findMany({ where: { patientId: patient.id, date: { gte: subDays(new Date(), Math.min(days, 400)) } }, orderBy: { date: "asc" } });
+  const days = z.coerce.number().int().min(1).max(400).catch(120).parse(new URL(req.url).searchParams.get("days") ?? 120);
+  const logs = await prisma.cycleLog.findMany({ where: { patientId: patient.id, date: { gte: subDays(new Date(), days) } }, orderBy: { date: "asc" } });
   return json({ logs });
 });
 

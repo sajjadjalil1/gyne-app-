@@ -3,8 +3,10 @@ import { prisma } from "@gyne/db";
 import { handle, json, parseBody, fail } from "@/lib/api";
 import { audit, issueOtp, normalizePhone, otpRateLimited } from "@/lib/auth";
 import { sendSms } from "@/lib/sms";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const POST = handle(async (req) => {
+  if (rateLimited(`otp-ip:${await clientIp()}`, 10, 15 * 60_000)) return fail(429, "طلبات كثيرة. حاولي بعد 15 دقيقة.");
   const { phone: raw } = await parseBody(req, z.object({ phone: z.string().min(8).max(20) }));
   const phone = normalizePhone(raw);
   if (!phone) return fail(400, "رقم الهاتف غير صحيح. مثال: 07801234567");
