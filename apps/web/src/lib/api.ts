@@ -30,7 +30,7 @@ export async function requireStaff(allowed: Role[] = CLINICAL) {
   if (c.role === "PATIENT") throw new HttpError(403, "هذه الواجهة لطاقم العيادة فقط");
   if (!allowed.includes(c.role)) throw new HttpError(403, "صلاحيتك ما تسمح بهذا");
   const user = await prisma.user.findUnique({ where: { id: c.sub } });
-  if (!user) throw new HttpError(401, "غير مصرّح");
+  if (!user || !user.totpEnabledAt) throw new HttpError(401, "غير مصرّح");
   return { claims: c, user };
 }
 

@@ -37,6 +37,8 @@ npm run dev:mobile                        # scan the QR with Expo Go, or press w
 ```
 
 Demo logins (seeded): doctor `07800000001`, nurse `07800000002`, patient Nour `07801234567`, Zahraa `07802222222`, Ruqaya `07805555555`.
+
+Staff sign in to the dashboard with password + authenticator app. The first time, choose «أول مرة؟ فعّل حسابك»: an SMS code proves the phone, then you pick a password, scan the QR with Google or Microsoft Authenticator and save the 10 recovery codes. After that the SMS code alone no longer opens the dashboard. If someone loses the phone and the codes: `npm run staff:reset-login -w packages/db -- 07XXXXXXXXX`.
 With `EXPOSE_DEV_OTP=1` the OTP is returned by the API and shown on the login screen; in production set `SMS_WEBHOOK_URL` to your SMS/WhatsApp gateway and never set `EXPOSE_DEV_OTP`.
 
 Production env for `apps/web`: `DATABASE_URL`, `AUTH_SECRET` (32+ random chars), `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN`.

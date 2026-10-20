@@ -3,6 +3,7 @@ import { prisma } from "@gyne/db";
 import { handle, json, parseBody, fail } from "@/lib/api";
 import { audit, createSession, normalizePhone, verifyOtp } from "@/lib/auth";
 import { clientIp, rateLimited } from "@/lib/rate-limit";
+import { signStep } from "@/lib/staff-auth";
 
 export const POST = handle(async (req) => {
   const body = await parseBody(req, z.object({ phone: z.string(), code: z.string().length(6), client: z.enum(["mobile", "web"]).default("mobile") }));
@@ -16,6 +17,12 @@ export const POST = handle(async (req) => {
     return fail(401, "الرمز غير صحيح أو منتهي");
   }
   if (body.client === "web" && user.role === "PATIENT") return fail(403, "حساب المريضة يعمل من التطبيق فقط");
+  // Staff: an SMS code alone never opens the dashboard. It only starts the first-time setup of password + authenticator.
+  if (user.role !== "PATIENT") {
+    if (user.totpEnabledAt) return fail(403, "حسابك مفعّل بكلمة سر. ادخل برقمك وكلمة السر.");
+    await audit("staff.setup.start", { actorId: user.id });
+    return json({ setupToken: await signStep(user, "setup"), user: { name: user.name } });
+  }
   const { token, expiresAt } = await createSession(user.id, user.role, req.headers.get("user-agent"), body.client);
   await audit("login", { actorId: user.id, meta: { client: body.client } });
   const res = json({ token, expiresAt, user: { id: user.id, name: user.name, role: user.role, patientId: user.patient?.id ?? null } });

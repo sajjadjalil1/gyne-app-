@@ -26,7 +26,7 @@ Caddy terminates HTTPS for `DOMAIN`, migrations run on container start, and the 
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
-| `AUTH_SECRET` | 32+ random characters, signs sessions |
+| `AUTH_SECRET` | 32+ random characters, signs sessions; also encrypts staff authenticator secrets unless `TOTP_ENCRYPTION_KEY` is set. Changing it later means every staff member re-runs first-time setup, so set `TOTP_ENCRYPTION_KEY` separately if you may rotate it |
 | `BOOTSTRAP_CLINIC_NAME`, `BOOTSTRAP_DOCTOR_NAME`, `BOOTSTRAP_DOCTOR_PHONE` | first-run clinic and doctor (ignored once any user exists) |
 | `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN` | OTP delivery gateway |
 | `OTP_DELIVERY=log` | pilot only: codes go to the log instead |
