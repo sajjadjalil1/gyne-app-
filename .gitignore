@@ -7,3 +7,6 @@ dist
 .env.*.local
 .DS_Store
 packages/db/prisma/*.db
+
+# store credentials (never commit)
+apps/mobile/google-service-account.json

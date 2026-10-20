@@ -1,0 +1,63 @@
+# Own-server alternative (any Linux VPS with Docker). Copy .env.deploy.example to .env first.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gyne
+      POSTGRES_USER: gyne
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gyne -d gyne"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://gyne:${DB_PASSWORD}@db:5432/gyne?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (32+ random chars)}
+      BOOTSTRAP_CLINIC_NAME: ${BOOTSTRAP_CLINIC_NAME:-عيادتي}
+      BOOTSTRAP_DOCTOR_NAME: ${BOOTSTRAP_DOCTOR_NAME:-}
+      BOOTSTRAP_DOCTOR_PHONE: ${BOOTSTRAP_DOCTOR_PHONE:-}
+      SMS_WEBHOOK_URL: ${SMS_WEBHOOK_URL:-}
+      SMS_WEBHOOK_TOKEN: ${SMS_WEBHOOK_TOKEN:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    expose: ["3000"]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [web]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env, e.g. api.example.com}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://gyne:${DB_PASSWORD}@db:5432/gyne
+    volumes:
+      - ./backups:/backups
+      - ./deploy/backup.sh:/backup.sh:ro
+    command: ["sh", "/backup.sh"]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -18,6 +18,8 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@gyne/core", "@gyne/db"],
   serverExternalPackages: ["@prisma/client"],
   turbopack: { root: path.join(__dirname, "../..") },
