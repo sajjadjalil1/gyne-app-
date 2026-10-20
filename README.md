@@ -42,6 +42,10 @@ With `EXPOSE_DEV_OTP=1` the OTP is returned by the API and shown on the login sc
 Production env for `apps/web`: `DATABASE_URL`, `AUTH_SECRET` (32+ random chars), `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN`.
 Mobile: `EXPO_PUBLIC_API_URL=https://api.yourclinic.example`.
 
+## Deploy
+
+See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`) or `docker compose up -d` on your own server; the app is built with EAS.
+
 ## What is in this first version
 
 Patient app: welcome + OTP login, home (cycle or pregnancy ring, week strip, mood quick-log, next appointment, contraception card, BP and kick counts), daily log (flow, mood, symptoms, pain, note; BP; fetal kicks), calendar with logged, predicted and fertile days, appointments with the antenatal schedule, messaging with the clinic.

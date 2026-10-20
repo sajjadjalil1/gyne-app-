@@ -1,0 +1,48 @@
+# Render Blueprint: one click creates the API server and the PostgreSQL database in Frankfurt.
+# Dashboard → New → Blueprint → pick this repository. See DEPLOY.md.
+services:
+  - type: web
+    name: ayadati-api
+    runtime: docker
+    region: frankfurt
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    preDeployCommand: sh deploy/migrate.sh
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_MIGRATIONS_ON_START
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ayadati-db
+          property: connectionString
+      - key: AUTH_SECRET
+        generateValue: true
+      # First run only: creates the clinic and the doctor's login on an empty database.
+      - key: BOOTSTRAP_CLINIC_NAME
+        value: "عيادتي"
+      - key: BOOTSTRAP_DOCTOR_NAME
+        value: "د. سجاد جليل"
+      - key: BOOTSTRAP_DOCTOR_PHONE
+        sync: false
+      # Pilot only: login codes are written to the service log until a gateway is connected.
+      # When SMS_WEBHOOK_URL is set, delete this variable in the Render dashboard.
+      - key: OTP_DELIVERY
+        value: log
+      # Fill in when an SMS/WhatsApp gateway is chosen.
+      # - key: SMS_WEBHOOK_URL
+      #   sync: false
+      # - key: SMS_WEBHOOK_TOKEN
+      #   sync: false
+
+databases:
+  - name: ayadati-db
+    region: frankfurt
+    plan: 0.1c-256mb
+    postgresMajorVersion: "16"
+    diskSizeGB: 1
+    ipAllowList: []   # reachable only from Render services in the same region

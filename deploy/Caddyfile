@@ -1,0 +1,5 @@
+# Automatic HTTPS for the own-server setup. DOMAIN comes from .env (e.g. api.ayadati.iq).
+{$DOMAIN} {
+	reverse_proxy web:3000
+	encode gzip
+}
