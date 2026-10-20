@@ -9,6 +9,9 @@ const at = (d: Date, h: number, m = 0) => setMinutes(setHours(d, h), m);
 
 async function main() {
   await prisma.auditLog.deleteMany();
+  await prisma.doseEvent.deleteMany();
+  await prisma.prescription.deleteMany();
+  await prisma.dangerReport.deleteMany();
   await prisma.session.deleteMany();
   await prisma.otpCode.deleteMany();
   await prisma.alert.deleteMany();
@@ -22,9 +25,21 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.clinic.deleteMany();
 
-  const clinic = await prisma.clinic.create({ data: { name: "عيادة د. سجاد للنسائية والتوليد", phone: "0780 000 0000" } });
-  await prisma.user.create({ data: { clinicId: clinic.id, role: "DOCTOR", name: "د. سجاد جليل", phone: "07800000001" } });
+  const clinic = await prisma.clinic.create({
+    data: {
+      name: "عيادة د. سجاد للنسائية والتوليد", phone: "07800000000", address: "المنصور، شارع 14 رمضان، بغداد", mapsUrl: "https://maps.google.com/?q=33.3152,44.3661",
+      nurseHours: "9 الصبح لـ 5 العصر", replyHours: 2, erHospital: "مستشفى العلوية للولادة", erMapsUrl: "https://maps.google.com/?q=33.3128,44.4068",
+      missedPillOne: "خذي الحبة اللي نسيتيها هسه حتى لو صارت حبتين بنفس اليوم، وكمّلي الباكيت عادي. ما تحتاجين وقاية إضافية.",
+      missedPillTwo: "خذي آخر حبة نسيتيها هسه وكمّلي الباكيت. استعملي واقي 7 أيام. إذا النسيان كان بآخر أسبوع من الباكيت ابدئي الباكيت الجاي بدون استراحة. وإذا صارت علاقة بالأيام اللي فاتت راسلينا اليوم.",
+      fastingAdvice: "الصيام بالحمل يحتاج موافقة الدكتورة. إذا صمتي وحسيتي بدوخة قوية، أو قلّت حركة الطفل، أو ما گدرتي تشربين ماي بعد الفطور، افطري واتصلي بينا.",
+    },
+  });
+  const doctor = await prisma.user.create({ data: { clinicId: clinic.id, role: "DOCTOR", name: "د. سجاد جليل", phone: "07800000001" } });
   await prisma.user.create({ data: { clinicId: clinic.id, role: "NURSE", name: "الممرضة هبة", phone: "07800000002" } });
+  const rx = (patientId: string, drug: string, label: string, extra: Record<string, unknown> = {}) =>
+    prisma.prescription.create({ data: { clinicId: clinic.id, patientId, drug, label, createdById: doctor.id, ...(extra as object) } });
+  const dose = (patientId: string, prescriptionId: string, dueAt: Date, status: "TAKEN" | "LATE" | "SKIPPED" | "MISSED", reason?: string) =>
+    prisma.doseEvent.create({ data: { patientId, prescriptionId, dueAt, status, reason, loggedAt: dueAt } });
 
   const mk = async (name: string, phone: string, age: number, extra: Partial<Parameters<typeof prisma.patient.create>[0]["data"]> = {}) => {
     const user = await prisma.user.create({ data: { clinicId: clinic.id, role: "PATIENT", name, phone } });
@@ -43,11 +58,25 @@ async function main() {
   for (const [d, s, di] of bp) await prisma.homeReading.create({ data: { patientId: nour.id, kind: "BP", takenAt: at(d, 7, 12), systolic: s, diastolic: di } });
   await prisma.homeReading.create({ data: { patientId: nour.id, kind: "WEIGHT", takenAt: at(subDays(today, 8), 9), value: 74.2 } });
   await prisma.homeReading.create({ data: { patientId: nour.id, kind: "KICKS", takenAt: at(subDays(today, 1), 20), value: 12 } });
-  await prisma.appointment.create({ data: { patientId: nour.id, type: "ANTENATAL", startsAt: at(addDays(today, 4), 10, 30), reason: "زيارة 29 أسبوعاً + حقنة Anti-D" } });
-  await prisma.appointment.create({ data: { patientId: nour.id, type: "ANTENATAL", status: "COMPLETED", startsAt: at(subDays(today, 8), 11), notes: "وزن 74.2 كغ، ارتفاع الرحم مناسب، نبض الجنين 142. وُصف الحديد." } });
-  await prisma.appointment.create({ data: { patientId: nour.id, type: "ULTRASOUND", status: "COMPLETED", startsAt: at(subDays(today, 58), 12), notes: "سونار التشوهات 20+1: لا تشوهات ظاهرة، المشيمة أمامية عالية، السائل طبيعي." } });
+  await prisma.appointment.create({ data: { patientId: nour.id, type: "ANTENATAL", startsAt: at(addDays(today, 4), 10, 30), reason: "مراجعة الشهر السابع · تحليل السكر · إبرة فصيلة الدم السالبة", prep: "تعالي صايمة من الساعة 10 بالليل. جيبي هوية فصيلة الدم.", place: "عيادة د. سجاد، المنصور" } });
+  await prisma.appointment.create({ data: { patientId: nour.id, type: "ANTENATAL", status: "COMPLETED", startsAt: at(subDays(today, 8), 11), notes: "وزن 74.2 كغ، ارتفاع الرحم مناسب، نبض الجنين 142. وُصف الحديد.", fetalHr: 142, weightKg: 74.2, scanNote: "الطفل زين" } });
+  await prisma.appointment.create({ data: { patientId: nour.id, type: "ULTRASOUND", status: "COMPLETED", startsAt: at(subDays(today, 58), 12), notes: "سونار التشوهات 20+1: لا تشوهات ظاهرة، المشيمة أمامية عالية، السائل طبيعي.", scanNote: "ما شفنا أي مشكلة بالطفل" } });
+  // Nour's medicines: iron taken most days, calcium twice daily, aspirin at bedtime (high criticality) missed 3 nights
+  const nIron = await rx(nour.id, "IRON", "حبة الحديد", { timing: "EMPTY_STOMACH", times: "10:30", supplyCount: 30, supplyAt: subDays(today, 20) });
+  const nCal = await rx(nour.id, "CALCIUM", "الكالسيوم", { timing: "AWAY_FROM_IRON", timesPerDay: 2, times: "14:00,20:00", startWeek: 20 });
+  const nAsp = await rx(nour.id, "ASPIRIN", "أسبرين صغير", { timing: "BEDTIME", times: "21:00", startWeek: 12, stopWeek: 36, criticality: "HIGH", indication: "preeclampsia risk" });
+  await rx(nour.id, "FOLIC", "حمض الفوليك", { stopWeek: 12, active: false });
+  for (let i = 7; i >= 1; i--) {
+    const day = subDays(today, i);
+    if (i !== 3) await dose(nour.id, nIron.id, at(day, 10, 30), i === 5 ? "LATE" : "TAKEN");
+    await dose(nour.id, nCal.id, at(day, 14), "TAKEN");
+    if (i !== 2) await dose(nour.id, nCal.id, at(day, 20), "TAKEN");
+    if (i > 3) await dose(nour.id, nAsp.id, at(day, 21), "TAKEN"); else if (i === 3) await dose(nour.id, nAsp.id, at(day, 21), "SKIPPED", "نسيت");
+  }
+  await dose(nour.id, nIron.id, at(today, 10, 30), "TAKEN");
+  await rx(nour.id, "OTHER", "أعشاب للغثيان (من الصيدلية)", { source: "SELF", timing: "ANY" });
   await prisma.message.create({ data: { patientId: nour.id, fromPatient: true, body: "عندي حرقة بالمعدة كل ليلة، شنو أسوي؟", createdAt: at(subDays(today, 35), 21), readAt: at(subDays(today, 35), 21, 40) } });
-  await prisma.message.create({ data: { patientId: nour.id, fromPatient: false, body: "طبيعية في هذه المرحلة. وجبات صغيرة، لا تنامي مباشرة بعد الأكل، ويمكنك أخذ مضاد حموضة بسيط. إذا صارت شديدة نراجع الدواء في الزيارة.", createdAt: at(subDays(today, 35), 21, 40) } });
+  await prisma.message.create({ data: { patientId: nour.id, fromPatient: false, authorName: "الممرضة هبة", body: "طبيعية في هذه المرحلة. وجبات صغيرة، لا تنامي مباشرة بعد الأكل، ويمكنك أخذ مضاد حموضة بسيط. إذا صارت شديدة نراجع الدواء في الزيارة.", createdAt: at(subDays(today, 35), 21, 40) } });
 
   // 2. Zahraa: 35+6, reduced movements message
   const zahraa = await mk("زهراء كريم", "07802222222", 24, { bloodGroup: "A+", gravida: 1 });
@@ -56,7 +85,8 @@ async function main() {
   await prisma.pregnancy.create({ data: { patientId: zahraa.id, lmp: zLmp, usDate: subDays(today, 35 * 7 + 6 - 63), usGaDays: 63, eddFinal: zDating.eddFinal, datingMethod: zDating.method } });
   await prisma.message.create({ data: { patientId: zahraa.id, fromPatient: true, body: "حركة الجنين قليلة من أمس", createdAt: subDays(new Date(), 0) } });
   await prisma.homeReading.create({ data: { patientId: zahraa.id, kind: "KICKS", takenAt: at(subDays(today, 1), 21), value: 6 } });
-  await prisma.appointment.create({ data: { patientId: zahraa.id, type: "ANTENATAL", startsAt: at(addDays(today, 2), 9, 30), reason: "زيارة 36 أسبوعاً + مسحة GBS" } });
+  await prisma.appointment.create({ data: { patientId: zahraa.id, type: "ANTENATAL", startsAt: at(addDays(today, 2), 9, 30), reason: "مراجعة الشهر التاسع · مسحة بسيطة قبل الولادة", place: "عيادة د. سجاد، المنصور", confirmed: true } });
+  await prisma.dangerReport.create({ data: { patientId: zahraa.id, signs: "nomove", action: "CALL", source: "button", createdAt: at(today, 8, 5) } });
 
   // 3. Mariam: 25+1, OGTT not booked
   const mariam = await mk("مريم جاسم", "07803333333", 36, { bloodGroup: "B+", gravida: 2, para: 1 });
@@ -79,13 +109,14 @@ async function main() {
 
   // 6. Aya: new lab result pending (represented as info message from lab)
   const aya = await mk("آية محمد", "07806666666", 27);
-  await prisma.contraception.create({ data: { patientId: aya.id, method: "COMBINED_PILL", brand: "Yasmin", startedAt: subDays(today, 200) } });
+  const ayaPill = await prisma.contraception.create({ data: { patientId: aya.id, method: "COMBINED_PILL", brand: "Yasmin", startedAt: subDays(today, 200), packType: "P21_7", packStartedAt: subDays(today, 11), pillTime: "21:00" } });
+  for (let i = 11; i >= 1; i--) if (i !== 2) await prisma.doseEvent.create({ data: { patientId: aya.id, contraceptionId: ayaPill.id, dueAt: at(subDays(today, i), 21), status: "TAKEN", loggedAt: at(subDays(today, i), 21, 5) } });
   await prisma.message.create({ data: { patientId: aya.id, fromPatient: true, body: "وصلتني نتيجة التحليل من المختبر، هل كلها طبيعية؟", createdAt: subDays(new Date(), 0) } });
   for (const s of [subDays(today, 84), subDays(today, 56), subDays(today, 28), today]) for (let i = 0; i < 5; i++) await prisma.cycleLog.create({ data: { patientId: aya.id, date: addDays(s, i), bleeding: true, flow: i < 2 ? "MEDIUM" : "LIGHT", mood: i === 0 ? "pain" : "calm" } });
 
   // 7. Saja: regular, contraception review today
   const saja = await mk("سجى علي", "07807777777", 22);
-  await prisma.contraception.create({ data: { patientId: saja.id, method: "COMBINED_PILL", brand: "Microgynon", startedAt: subDays(today, 120) } });
+  await prisma.contraception.create({ data: { patientId: saja.id, method: "COMBINED_PILL", brand: "Microgynon", startedAt: subDays(today, 120), packType: "P21_7", packStartedAt: subDays(today, 4), pillTime: "22:00" } });
   await prisma.appointment.create({ data: { patientId: saja.id, type: "CONTRACEPTION_REVIEW", startsAt: at(today, 16, 30), reason: "صداع متكرر على الحبوب المركّبة" } });
   for (const s of [subDays(today, 70), subDays(today, 42), subDays(today, 14)]) for (let i = 0; i < 5; i++) await prisma.cycleLog.create({ data: { patientId: saja.id, date: addDays(s, i), bleeding: true, flow: "MEDIUM" } });
 
