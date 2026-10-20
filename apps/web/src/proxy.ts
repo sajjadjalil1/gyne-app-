@@ -13,11 +13,19 @@ function withCors(res: NextResponse, origin: string | null) {
   return res;
 }
 
+const hostOf = (u: string) => { try { return new URL(u).host; } catch { return null; } };
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/api/")) {
     const origin = req.headers.get("origin");
     if (req.method === "OPTIONS") return withCors(new NextResponse(null, { status: 204 }), origin);
+    // CSRF: a write that relies on the dashboard cookie (no Bearer token) must come from this site.
+    const unsafe = !["GET", "HEAD"].includes(req.method);
+    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    if (unsafe && req.cookies.get("gyne_staff") && !req.headers.get("authorization") && origin && hostOf(origin) !== host) {
+      return NextResponse.json({ error: "طلب مرفوض" }, { status: 403 });
+    }
     return withCors(NextResponse.next(), origin);
   }
   // Staff dashboard gate: no cookie, no entry. Full verification happens in the page (DB-backed session).

@@ -5,6 +5,8 @@
 export async function sendSms(phone: string, text: string): Promise<void> {
   const url = process.env.SMS_WEBHOOK_URL;
   if (!url) {
+    // Never print a login code into production logs: fail loudly instead.
+    if (process.env.NODE_ENV === "production") throw new Error("SMS_WEBHOOK_URL is not set");
     console.log(`[sms:dev] ${phone}: ${text}`);
     return;
   }
@@ -12,5 +14,5 @@ export async function sendSms(phone: string, text: string): Promise<void> {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${process.env.SMS_WEBHOOK_TOKEN ?? ""}` },
     body: JSON.stringify({ to: phone, text }),
-  }).catch((e) => console.error("sms failed", e));
+  }).then((r) => { if (!r.ok) console.error("sms failed: HTTP", r.status); }, (e) => console.error("sms failed:", (e as Error).message));
 }
