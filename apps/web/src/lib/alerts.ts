@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, differenceInHours, startOfDay } from "date-fns";
-import type { Alert, Contraception, HomeReading, Message, Patient, Pregnancy, CycleLog } from "@gyne/db";
-import { cycleFlags } from "@gyne/core";
+import type { Alert, Contraception, HomeReading, Message, Patient, Pregnancy, CycleLog, Prescription, DoseEvent, DangerReport } from "@gyne/db";
+import { cycleFlags, DANGER_LABEL, isUrgentText, missedStreak, pillState, type PackType, type RxLike } from "@gyne/core";
 import { antenatalSchedule, gaOnDate, formatGA } from "@gyne/core";
 import { methodLabel } from "@gyne/core";
 import { fmtDate } from "@gyne/core";
@@ -23,6 +23,9 @@ export type PatientBundle = Patient & {
   pregnancies: Pregnancy[];
   cycleLogs: CycleLog[];
   alerts: Alert[];
+  prescriptions?: Prescription[];
+  doseEvents?: DoseEvent[];
+  dangerReports?: DangerReport[];
 };
 
 export const BP_LIMITS = { sysWarn: 140, diaWarn: 90, sysCrit: 160, diaCrit: 110 };
@@ -34,6 +37,13 @@ export const BP_LIMITS = { sysWarn: 140, diaWarn: 90, sysCrit: 160, diaCrit: 110
 export function deriveAlerts(p: PatientBundle, now = new Date()): DerivedAlert[] {
   const out: DerivedAlert[] = [];
   const activePreg = p.pregnancies.find((x) => x.active);
+  const gaWeeksOn = (d: Date) => (activePreg ? gaOnDate(activePreg.eddFinal, d).weeks : null);
+
+  // Red button / danger sign reports (last 48 h, not yet handled)
+  for (const r of (p.dangerReports ?? []).filter((r) => !r.handledAt && differenceInHours(now, r.createdAt) <= 48)) {
+    const signs = r.signs.split(",").map((k) => DANGER_LABEL[k] ?? k).join("، ");
+    out.push({ patientId: p.id, severity: "CRITICAL", kind: "DANGER", title: `علامة خطر: ${signs}`, detail: r.action === "ER" ? "التطبيق وجّهها إلى الطوارئ. اتصلي بها الآن." : "التطبيق طلب منها الاتصال بالعيادة. اتصلي بها الآن.", at: r.createdAt });
+  }
 
   // Blood pressure (pregnancy or not)
   const bps = p.readings.filter((r) => r.kind === "BP" && r.systolic != null && r.diastolic != null).sort((a, b) => b.takenAt.getTime() - a.takenAt.getTime());
@@ -54,7 +64,7 @@ export function deriveAlerts(p: PatientBundle, now = new Date()): DerivedAlert[]
   if (unread.length) {
     const oldest = unread[0];
     const hrs = differenceInHours(now, oldest.createdAt);
-    const urgent = /نزف|حركة|صداع|ماء|تقلص|ألم شديد/.test(unread.map((m) => m.body).join(" "));
+    const urgent = unread.some((m) => m.urgent) || isUrgentText(unread.map((m) => m.body).join(" "));
     out.push({ patientId: p.id, severity: urgent ? "CRITICAL" : hrs >= 4 ? "WARNING" : "INFO", kind: "MESSAGE", title: `رسالة بلا رد: «${oldest.body.slice(0, 40)}${oldest.body.length > 40 ? "…" : ""}»`, detail: unread.length > 1 ? `${unread.length} رسائل بانتظار الرد.` : "بانتظار الرد.", at: oldest.createdAt });
   }
 
@@ -72,6 +82,24 @@ export function deriveAlerts(p: PatientBundle, now = new Date()): DerivedAlert[]
     const kicks = p.readings.filter((r) => r.kind === "KICKS").sort((a, b) => b.takenAt.getTime() - a.takenAt.getTime())[0];
     if (kicks && ga.weeks >= 28 && (kicks.value ?? 10) < 10 && differenceInHours(now, kicks.takenAt) <= 24) {
       out.push({ patientId: p.id, severity: "CRITICAL", kind: "KICKS_LOW", title: `حركات الجنين ${kicks.value} فقط`, detail: "أقل من 10 حركات في جلسة العدّ. تواصلي مع المريضة.", at: kicks.takenAt });
+    }
+  }
+
+  // Medicines: only clinically relevant misses reach the worklist
+  const events = (p.doseEvents ?? []).map((e) => ({ prescriptionId: e.prescriptionId, dueAt: e.dueAt, status: e.status }));
+  for (const rx of (p.prescriptions ?? []).filter((r) => r.active)) {
+    if (rx.source === "SELF" && !rx.reviewedAt) { out.push({ patientId: p.id, severity: "INFO", kind: "RX_SELF", title: `دواء أضافته بنفسها: ${rx.label}`, detail: "بانتظار مراجعتك.", at: rx.createdAt }); continue; }
+    if (rx.criticality !== "HIGH") continue;
+    const streak = missedStreak(rx as unknown as RxLike, events, now, gaWeeksOn, p.wakeTime, p.sleepTime, p.ramadanMode);
+    if (streak >= 3) out.push({ patientId: p.id, severity: "WARNING", kind: "RX_MISSED", title: `${rx.label}: ${streak} أيام بلا جرعة`, detail: "دواء مهم. اسأليها عن السبب.", at: now });
+  }
+  const pillC = p.contraceptions.find((c) => !c.endedAt && c.packType && c.packStartedAt);
+  if (pillC) {
+    const st = pillState(pillC.packType as PackType, pillC.packStartedAt as Date, now);
+    if (!st.inFree) {
+      let miss = 0;
+      for (let i = 1; i <= 3; i++) { const day = addDays(startOfDay(now), -i); if (day < st.cycleStart) break; const ok = (p.doseEvents ?? []).some((e) => e.contraceptionId === pillC.id && differenceInCalendarDays(day, e.dueAt) === 0 && (e.status === "TAKEN" || e.status === "LATE")); if (ok) break; miss++; }
+      if (miss >= 2) out.push({ patientId: p.id, severity: "WARNING", kind: "PILL_MISSED", title: `حبوب منع الحمل: ${miss} أيام بلا حبة`, detail: "راجعي تعليمات الحبة المنسية معها.", at: now });
     }
   }
 

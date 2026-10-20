@@ -15,6 +15,9 @@ export async function buildWorklist(clinicId: string, now = new Date()) {
       pregnancies: { where: { active: true } },
       cycleLogs: { where: { date: { gte: subDays(now, 200) } }, orderBy: { date: "asc" } },
       alerts: { where: { resolvedAt: null } },
+      prescriptions: { where: { active: true } },
+      doseEvents: { where: { dueAt: { gte: subDays(now, 14) } } },
+      dangerReports: { where: { handledAt: null, createdAt: { gte: subDays(now, 2) } } },
     },
   });
   const items: WorkItem[] = [];

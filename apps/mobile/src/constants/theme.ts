@@ -8,6 +8,7 @@ export const Colors: { light: Record<string, string>; dark: Record<string, strin
     fg: "#2a2440", muted: "#6f6886", faint: "#9a93ad",
     lav: "#9b84d6", lavDeep: "#7e63c4", lavSoft: "#ebe3fa", rose: "#f2a7b8", roseSoft: "#fde6ec",
     crit: "#d8556b", warn: "#d9a441", ok: "#5fb58c", info: "#6e8fd6", white: "#ffffff",
+    warnSoft: "#fff2d6", okSoft: "#e3f5ec", critSoft: "#fde3e8", mutedDark: "#5a5370",
   },
   dark: {
     bg: "#1c1826", g1: "#2d2238", g2: "#2a2140", g3: "#3a2d5c", g4: "#2e2134",
@@ -15,6 +16,7 @@ export const Colors: { light: Record<string, string>; dark: Record<string, strin
     fg: "#efeaf7", muted: "#b3a9cc", faint: "#7f7698",
     lav: "#b39ce8", lavDeep: "#9a80dc", lavSoft: "#3a2f57", rose: "#e9a0b3", roseSoft: "#4a2e3a",
     crit: "#f07d90", warn: "#e6b85c", ok: "#79cda3", info: "#8ea9ea", white: "#ffffff",
+    warnSoft: "#4a3b1e", okSoft: "#22402f", critSoft: "#4a2630", mutedDark: "#c9c0dd",
   },
 };
 export type Palette = { [K in keyof typeof Colors.light]: string };
