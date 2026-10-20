@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@gyne/db";
+import { autoReply, bpLevel, isUrgentText } from "@gyne/core";
 import { handle, json, parseBody, requirePatient } from "@/lib/api";
 import { audit } from "@/lib/auth";
 
@@ -10,10 +11,23 @@ export const GET = handle(async () => {
   return json({ messages });
 });
 
+/**
+ * Every patient message gets an instant receipt so chat is never mistaken for
+ * an emergency line. Danger words plus a recent high BP escalate immediately.
+ */
 export const POST = handle(async (req) => {
   const { patient, claims } = await requirePatient();
   const { body } = await parseBody(req, z.object({ body: z.string().trim().min(1).max(1000) }));
-  const message = await prisma.message.create({ data: { patientId: patient.id, fromPatient: true, body } });
-  await audit("message.send", { actorId: claims.sub, target: patient.id });
-  return json({ message }, { status: 201 });
+  const [clinic, lastBp, preg] = await Promise.all([
+    prisma.clinic.findUniqueOrThrow({ where: { id: patient.clinicId } }),
+    prisma.homeReading.findFirst({ where: { patientId: patient.id, kind: "BP" }, orderBy: { takenAt: "desc" } }),
+    prisma.pregnancy.findFirst({ where: { patientId: patient.id, active: true } }),
+  ]);
+  const urgent = isUrgentText(body);
+  const bpHigh = !!lastBp && bpLevel(lastBp.systolic ?? 0, lastBp.diastolic ?? 0) !== "ok";
+  const message = await prisma.message.create({ data: { patientId: patient.id, fromPatient: true, body, urgent } });
+  await prisma.message.create({ data: { patientId: patient.id, fromPatient: false, auto: true, body: autoReply(clinic.replyHours) } });
+  if (urgent) await prisma.dangerReport.create({ data: { patientId: patient.id, signs: "message", action: "NONE", source: "message" } });
+  await audit("message.send", { actorId: claims.sub, target: patient.id, meta: { urgent } });
+  return json({ message, urgent, escalate: urgent && (bpHigh || !!preg), bpHigh }, { status: 201 });
 });
