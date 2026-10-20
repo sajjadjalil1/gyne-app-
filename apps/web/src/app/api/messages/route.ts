@@ -25,9 +25,15 @@ export const POST = handle(async (req) => {
   ]);
   const urgent = isUrgentText(body);
   const bpHigh = !!lastBp && bpLevel(lastBp.systolic ?? 0, lastBp.diastolic ?? 0) !== "ok";
-  const message = await prisma.message.create({ data: { patientId: patient.id, fromPatient: true, body, urgent } });
-  await prisma.message.create({ data: { patientId: patient.id, fromPatient: false, auto: true, body: autoReply(clinic.replyHours) } });
-  if (urgent) await prisma.dangerReport.create({ data: { patientId: patient.id, signs: "message", action: "NONE", source: "message" } });
+  // A retry after a dropped connection resends the same text: answer with the first copy instead of a second one.
+  const dup = await prisma.message.findFirst({ where: { patientId: patient.id, fromPatient: true, body, createdAt: { gte: new Date(Date.now() - 30_000) } } });
+  if (dup) return json({ message: dup, urgent: dup.urgent, escalate: dup.urgent && (bpHigh || !!preg), bpHigh });
+  const message = await prisma.$transaction(async (tx) => {
+    const m = await tx.message.create({ data: { patientId: patient.id, fromPatient: true, body, urgent } });
+    await tx.message.create({ data: { patientId: patient.id, fromPatient: false, auto: true, body: autoReply(clinic.replyHours) } });
+    if (urgent) await tx.dangerReport.create({ data: { patientId: patient.id, signs: "message", action: "NONE", source: "message" } });
+    return m;
+  });
   await audit("message.send", { actorId: claims.sub, target: patient.id, meta: { urgent } });
   return json({ message, urgent, escalate: urgent && (bpHigh || !!preg), bpHigh }, { status: 201 });
 });

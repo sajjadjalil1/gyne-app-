@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@gyne/db";
 import { requireStaffPage } from "@/lib/staff";
+import { audit } from "@/lib/auth";
 import { Shell } from "@/components/shell";
 import { Avatar } from "@/components/severity";
 import { ageYears, formatGA, gaOnDate, methodLabel } from "@gyne/core";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Patients({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const user = await requireStaffPage();
   const { q } = await searchParams;
+  if (q) await audit("patient.search", { actorId: user.id, meta: { q: q.slice(0, 40) } });
   const patients = await prisma.patient.findMany({
     where: { clinicId: user.clinicId, ...(q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : {}) },
     include: { pregnancies: { where: { active: true } }, contraceptions: { where: { endedAt: null } } },

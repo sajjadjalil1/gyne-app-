@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@gyne/db";
+import { prisma, type Role } from "@gyne/db";
+import { CLINICAL } from "./roles";
 import { currentClaims, type TokenClaims } from "./auth";
 
 export const json = (data: unknown, init?: ResponseInit) => NextResponse.json(data, init);
@@ -24,9 +25,10 @@ export async function requirePatient() {
   return { claims: c, patient };
 }
 
-export async function requireStaff() {
+export async function requireStaff(allowed: Role[] = CLINICAL) {
   const c = await requireAuth();
   if (c.role === "PATIENT") throw new HttpError(403, "هذه الواجهة لطاقم العيادة فقط");
+  if (!allowed.includes(c.role)) throw new HttpError(403, "صلاحيتك ما تسمح بهذا");
   const user = await prisma.user.findUnique({ where: { id: c.sub } });
   if (!user) throw new HttpError(401, "غير مصرّح");
   return { claims: c, user };

@@ -2,13 +2,14 @@ import Link from "next/link";
 import { prisma } from "@gyne/db";
 import { addDays, startOfDay, endOfDay } from "date-fns";
 import { requireStaffPage } from "@/lib/staff";
+import { FRONT_DESK } from "@/lib/roles";
 import { Shell } from "@/components/shell";
 import { APPT_TYPE_LABEL, fmtDate, fmtTime } from "@gyne/core";
 
 export const dynamic = "force-dynamic";
 
 export default async function Appointments() {
-  const user = await requireStaffPage();
+  const user = await requireStaffPage(FRONT_DESK);
   const now = new Date();
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(now), i));
   const appts = await prisma.appointment.findMany({ where: { patient: { clinicId: user.clinicId }, startsAt: { gte: days[0], lte: endOfDay(days[6]) } }, include: { patient: true }, orderBy: { startsAt: "asc" } });

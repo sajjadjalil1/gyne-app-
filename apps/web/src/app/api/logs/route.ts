@@ -39,8 +39,15 @@ export const PUT = handle(async (req) => {
   if (preg && (bleeding || flow)) { symptoms = Array.from(new Set([...symptoms, "bleeding"])); bleeding = false; flow = null; }
   const dangers = preg ? symptoms.filter((s) => DANGER_KEYS.includes(s)) : [];
   const data = { bleeding, flow, pain: b.pain ?? null, mood: b.mood ?? null, symptoms: symptoms.length ? symptoms.join(",") : null, note: b.note ?? null };
-  const log = await prisma.cycleLog.upsert({ where: { patientId_date: { patientId: patient.id, date } }, create: { patientId: patient.id, date, ...data }, update: data });
-  if (dangers.length) await prisma.dangerReport.create({ data: { patientId: patient.id, signs: dangers.join(","), action: "NONE", source: "checkin" } });
+  const log = await prisma.$transaction(async (tx) => {
+    const l = await tx.cycleLog.upsert({ where: { patientId_date: { patientId: patient.id, date } }, create: { patientId: patient.id, date, ...data }, update: data });
+    // Saving the same day again (edit or retry) reports each danger sign once, not once per save.
+    const signs = dangers.join(",");
+    if (dangers.length && !(await tx.dangerReport.findFirst({ where: { patientId: patient.id, source: "checkin", signs, createdAt: { gte: startOfDay(new Date()) } } }))) {
+      await tx.dangerReport.create({ data: { patientId: patient.id, signs, action: "NONE", source: "checkin" } });
+    }
+    return l;
+  });
   await audit("log.upsert", { actorId: claims.sub, target: patient.id, meta: { date, dangers } });
   return json({ log, dangers });
 });

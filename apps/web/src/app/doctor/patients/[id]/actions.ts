@@ -3,11 +3,15 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@gyne/db";
 import { z } from "zod";
 import { FORMULARY, TIMING_LABEL, formularyItem, type TimingRule } from "@gyne/core";
+import type { Role } from "@gyne/db";
 import { requireStaff } from "@/lib/api";
 import { audit } from "@/lib/auth";
+import { CLINICAL, PRESCRIBERS } from "@/lib/roles";
 
-async function ownPatient(patientId: string) {
-  const { user } = await requireStaff();
+/** The patient must belong to the caller's clinic and the caller's role must be allowed; anything else is a silent no-op. */
+async function ownPatient(patientId: string, roles: Role[] = CLINICAL) {
+  const { user } = await requireStaff(roles).catch(() => ({ user: null }));
+  if (!user) return null;
   const patient = await prisma.patient.findFirst({ where: { id: patientId, clinicId: user.clinicId } });
   return patient ? { user, patient } : null;
 }
@@ -18,6 +22,9 @@ export async function replyToPatient(formData: FormData) {
   if (!patientId || !body || body.length > 1000) return;
   const ctx = await ownPatient(patientId);
   if (!ctx) return;
+  // A double click or a resent form must not post the same reply twice.
+  const dup = await prisma.message.findFirst({ where: { patientId, fromPatient: false, body, createdAt: { gte: new Date(Date.now() - 30_000) } } });
+  if (dup) return;
   await prisma.message.create({ data: { patientId, fromPatient: false, body, authorName: ctx.user.name } });
   await audit("message.reply", { actorId: ctx.user.id, target: patientId });
   revalidatePath(`/doctor/patients/${patientId}`);
@@ -41,10 +48,12 @@ const RxSchema = z.object({
 /** "Prescribe once, remind automatically": the only place a dose is typed. */
 export async function addPrescription(formData: FormData) {
   const patientId = String(formData.get("patientId") ?? "");
-  const ctx = await ownPatient(patientId);
+  const ctx = await ownPatient(patientId, PRESCRIBERS);
   if (!ctx) return;
   const b = RxSchema.parse(Object.fromEntries(formData));
   const f = formularyItem(b.drug);
+  // Same drug prescribed for the same patient a moment ago: a double submit, not a second prescription.
+  if (await prisma.prescription.findFirst({ where: { patientId, drug: b.drug, active: true, createdAt: { gte: new Date(Date.now() - 60_000) } } })) return;
   const times = b.times.trim().split(/[,\s]+/).filter((x) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(x)).map((x) => x.padStart(5, "0")).slice(0, 4).join(",");
   await prisma.prescription.create({
     data: {
@@ -64,7 +73,7 @@ export async function addPrescription(formData: FormData) {
 export async function stopPrescription(formData: FormData) {
   const patientId = String(formData.get("patientId") ?? "");
   const id = String(formData.get("id") ?? "");
-  const ctx = await ownPatient(patientId);
+  const ctx = await ownPatient(patientId, PRESCRIBERS);
   if (!ctx) return;
   await prisma.prescription.updateMany({ where: { id, patientId }, data: { active: false, stopAt: new Date() } });
   await audit("rx.stop", { actorId: ctx.user.id, target: patientId, meta: { id } });
@@ -74,7 +83,7 @@ export async function stopPrescription(formData: FormData) {
 export async function reviewPrescription(formData: FormData) {
   const patientId = String(formData.get("patientId") ?? "");
   const id = String(formData.get("id") ?? "");
-  const ctx = await ownPatient(patientId);
+  const ctx = await ownPatient(patientId, PRESCRIBERS);
   if (!ctx) return;
   await prisma.prescription.updateMany({ where: { id, patientId }, data: { reviewedAt: new Date() } });
   revalidatePath(`/doctor/patients/${patientId}`);
