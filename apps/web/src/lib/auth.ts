@@ -1,4 +1,4 @@
-import { createHash, randomInt, randomBytes } from "node:crypto";
+import { createHash, randomInt, randomBytes, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { addMinutes, addDays, addHours } from "date-fns";
 import { prisma, type Role } from "@gyne/db";
@@ -41,13 +41,19 @@ export async function issueOtp(phone: string): Promise<{ code: string; expiresAt
   return { code, expiresAt };
 }
 
+/**
+ * Both steps are atomic so parallel requests cannot cheat: each guess spends an attempt
+ * before it is checked, and only one request can mark the code used.
+ */
 export async function verifyOtp(phone: string, code: string): Promise<boolean> {
   const rec = await prisma.otpCode.findFirst({ where: { phone, usedAt: null, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } });
   if (!rec) return false;
-  if (rec.attempts >= OTP_MAX_ATTEMPTS) return false;
-  const ok = rec.codeHash === sha256(`${phone}:${code}`);
-  await prisma.otpCode.update({ where: { id: rec.id }, data: ok ? { usedAt: new Date() } : { attempts: { increment: 1 } } });
-  return ok;
+  const spent = await prisma.otpCode.updateMany({ where: { id: rec.id, usedAt: null, attempts: { lt: OTP_MAX_ATTEMPTS } }, data: { attempts: { increment: 1 } } });
+  if (spent.count === 0) return false;
+  const a = Buffer.from(rec.codeHash, "hex"), b = Buffer.from(sha256(`${phone}:${code}`), "hex");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+  const used = await prisma.otpCode.updateMany({ where: { id: rec.id, usedAt: null }, data: { usedAt: new Date() } });
+  return used.count === 1;
 }
 
 export type TokenClaims = { sub: string; role: Role; sid: string };

@@ -14,6 +14,10 @@ export const POST = handle(async (req) => {
   const { patient, claims } = await requirePatient();
   const b = await parseBody(req, Schema);
   const takenAt = b.takenAt ? new Date(b.takenAt) : new Date();
+  const values = b.kind === "BP" ? { systolic: b.systolic, diastolic: b.diastolic } : { value: b.value };
+  // Same reading sent twice within two minutes (double tap, retry): keep one row.
+  const dup = await prisma.homeReading.findFirst({ where: { patientId: patient.id, kind: b.kind, ...values, takenAt: { gte: new Date(takenAt.getTime() - 120_000), lte: new Date(takenAt.getTime() + 120_000) } } });
+  if (dup) return json({ reading: dup });
   const reading = await prisma.homeReading.create({
     data: { patientId: patient.id, kind: b.kind, takenAt, systolic: b.kind === "BP" ? b.systolic : null, diastolic: b.kind === "BP" ? b.diastolic : null, value: b.kind === "BP" ? null : b.value, note: "note" in b ? b.note : null },
   });

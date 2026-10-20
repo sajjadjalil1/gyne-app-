@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@gyne/db";
 import { subDays } from "date-fns";
 import { requireStaffPage } from "@/lib/staff";
+import { audit } from "@/lib/auth";
 import { Shell } from "@/components/shell";
 import { Avatar } from "@/components/severity";
 import { deriveAlerts } from "@/lib/alerts";
@@ -32,6 +33,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     },
   });
   if (!p) notFound();
+  await audit("patient.view", { actorId: user.id, target: p.id });
   await prisma.message.updateMany({ where: { patientId: p.id, fromPatient: true, readAt: null }, data: { readAt: now } });
 
   const alerts = deriveAlerts({ ...p, messages: p.messages }, now);
