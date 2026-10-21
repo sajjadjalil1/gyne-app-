@@ -1,4 +1,4 @@
-# Publishes a browser preview of the patient app (apps/mobile) to GitHub Pages.
+# Publishes a browser preview of the patient app (apps/mobile) to GitHub Pages (gh-pages branch).
 # It runs in demo mode with made-up patients and never calls the live server.
 name: Patient app web preview
 
@@ -12,12 +12,10 @@ on:
       - ".github/workflows/web-preview.yml"
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: web-preview
   cancel-in-progress: true
 
 jobs:
@@ -31,10 +29,6 @@ jobs:
           node-version: 22
           cache: npm
 
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
@@ -47,16 +41,11 @@ jobs:
           npx expo export --platform web --output-dir ../../preview
           cp ../../preview/index.html ../../preview/404.html
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: preview
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish to the gh-pages branch
+        working-directory: preview
+        run: |
+          touch .nojekyll
+          git init -q -b gh-pages
+          git add -A
+          git -c user.name="Sajjad Jalil" -c user.email="289023317+sajjadjalil1@users.noreply.github.com" commit -q -m "Patient app web preview from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" gh-pages
