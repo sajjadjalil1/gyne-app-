@@ -3,12 +3,13 @@ import { fmtDate } from "@gyne/core";
 import type { Role } from "@gyne/db";
 import { LogoutButton } from "./logout-button";
 
-export function Shell({ user, clinic, active, children }: { user: { name: string; role: Role }; clinic: { name: string }; active: "work" | "appts" | "patients"; children: React.ReactNode }) {
+export function Shell({ user, clinic, active, children }: { user: { name: string; role: Role }; clinic: { name: string }; active: "work" | "appts" | "patients" | "staff"; children: React.ReactNode }) {
   const tabs = [
     { key: "work", href: "/doctor", label: "قائمة العمل" },
     { key: "appts", href: "/doctor/appointments", label: "المواعيد" },
     { key: "patients", href: "/doctor/patients", label: "المريضات" },
-  ].filter((t) => user.role !== "RECEPTION" || t.key === "appts");
+    { key: "staff", href: "/doctor/staff", label: "الطاقم" },
+  ].filter((t) => (user.role !== "RECEPTION" || t.key === "appts") && (t.key !== "staff" || user.role === "DOCTOR"));
   return (
     <div className="min-h-dvh px-4 pb-10 max-w-6xl mx-auto">
       <header className="flex flex-wrap items-center gap-3 py-4">
