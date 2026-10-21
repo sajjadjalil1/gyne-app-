@@ -30,3 +30,21 @@ export async function addStaff(_prev: FormState, formData: FormData): Promise<Fo
   revalidatePath("/doctor/staff");
   return { ok: `انضاف ${name}. يفتح صفحة الدخول ويضغط «أول مرة؟ فعّل حسابك» ويكتب رقمه.` };
 }
+
+/** Doctor-only. Switching an account off signs it out everywhere at once; switching it back on keeps its password and authenticator. */
+export async function setStaffActive(formData: FormData) {
+  const { user } = await requireStaff(PRESCRIBERS).catch(() => ({ user: null }));
+  if (!user) return;
+  const id = String(formData.get("id") ?? "");
+  const active = formData.get("active") === "1";
+  // Never yourself, so a clinic cannot lock out its last doctor by a slip of the mouse.
+  if (!id || id === user.id) return;
+  const target = await prisma.user.findFirst({ where: { id, clinicId: user.clinicId, role: { not: "PATIENT" } } });
+  if (!target || !!target.disabledAt === !active) return;
+  await prisma.$transaction([
+    prisma.user.update({ where: { id }, data: { disabledAt: active ? null : new Date() } }),
+    ...(active ? [] : [prisma.session.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } })]),
+  ]);
+  await audit(active ? "staff.enable" : "staff.disable", { actorId: user.id, target: id });
+  revalidatePath("/doctor/staff");
+}

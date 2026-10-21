@@ -13,7 +13,7 @@ export const POST = handle(async (req) => {
   if (!phone) return fail(400, "رقم الهاتف غير صحيح");
   if (rateLimited(`pw-ip:${await clientIp()}`, 20, 15 * 60_000) || rateLimited(`pw:${phone}`, 10, 15 * 60_000)) return fail(429, "محاولات كثيرة. حاول بعد 15 دقيقة.");
   const user = await prisma.user.findUnique({ where: { phone } });
-  if (!user || user.role === "PATIENT" || !user.passwordHash || !user.totpEnabledAt) {
+  if (!user || user.role === "PATIENT" || user.disabledAt || !user.passwordHash || !user.totpEnabledAt) {
     await burnPasswordTime(b.password);
     // Same answer for "no such staff" and "not set up yet": the setup path starts from the SMS code anyway.
     return fail(401, "الرقم أو كلمة السر غير صحيحة. إذا هذا أول دخول لك، اختار «أول مرة».");
