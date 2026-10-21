@@ -1,0 +1,72 @@
+# Builds a test APK of the patient app (apps/mobile) for direct install on Android phones.
+# The APK talks to the live server and is attached to a GitHub pre-release.
+name: Android test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-test-build]
+    paths:
+      - "apps/mobile/**"
+      - "packages/core/**"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_PUBLIC_API_URL: https://ayadati-api.onrender.com
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Android project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "out/ayadati-test-${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ayadati-test-apk
+          path: out/*.apk
+
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "android-test-${{ github.run_number }}" out/*.apk \
+            --prerelease \
+            --target "${{ github.sha }}" \
+            --title "عيادتي - نسخة تجريبية ${{ github.run_number }}" \
+            --notes "نسخة تجريبية لتطبيق المريضة. نزّل ملف APK من الأسفل وثبّته على أندرويد."
