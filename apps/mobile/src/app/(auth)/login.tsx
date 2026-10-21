@@ -7,6 +7,7 @@ import { Button } from "@/components/button";
 import { T } from "@/components/text";
 import { Icon } from "@/components/icon";
 import { api } from "@/lib/api";
+import { DEMO, DEMO_PHONES } from "@/lib/demo";
 import { useSession } from "@/lib/session";
 import { useTheme } from "@/hooks/use-theme";
 import { Fonts } from "@/constants/theme";
@@ -62,6 +63,18 @@ export default function Login() {
                 <T kind="small" style={{ textAlign: "center" }}>راح توصلچ رسالة من <T kind="label">عيادتي</T> بيها ٦ أرقام. ما تحتاجين كلمة سر.</T>
                 <TextInput value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" placeholder="0780 123 4567" placeholderTextColor={t.faint} style={[s.input, { backgroundColor: t.glassStrong, borderColor: t.glassLine, color: t.fg }]} autoFocus accessibilityLabel="رقم الموبايل" />
                 {phoneOk && <T kind="small" style={{ textAlign: "center" }} color={t.ok}>✓ {pretty(phone)}</T>}
+                {DEMO && (
+                  <View style={s.demo}>
+                    <T kind="small" style={{ textAlign: "center" }}>نسخة تجريبية: اختاري مريضة وهمية</T>
+                    <View style={s.demoRow}>
+                      {DEMO_PHONES.map((p) => (
+                        <Pressable key={p.phone} onPress={() => setPhone(p.phone)} style={[s.change, { backgroundColor: phone === p.phone ? t.lav : t.glassStrong, borderColor: t.glassLine }]}>
+                          <T kind="label" color={phone === p.phone ? t.white : undefined}>{p.label}</T>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                )}
                 {error && <T kind="small" color={t.crit} style={{ textAlign: "center" }}>{error}</T>}
                 <Button title="دزّي الرمز" big onPress={request} busy={busy} disabled={!phoneOk} />
               </>
@@ -103,6 +116,8 @@ const s = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, fontSize: 22, fontFamily: Fonts.semibold, textAlign: "center", writingDirection: "ltr" },
   phoneRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: 16, borderWidth: 1 },
   change: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
+  demo: { gap: 8 },
+  demoRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8 },
   boxes: { flexDirection: "row", justifyContent: "center", gap: 8, direction: "ltr" },
   box: { width: 46, height: 56, borderRadius: 14, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   hidden: { position: "absolute", opacity: 0, height: 1, width: 1 },

@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { DEMO, demoApi } from "./demo";
 
 const TOKEN_KEY = "gyne.token";
 
@@ -30,6 +31,9 @@ export async function setToken(token: string | null) {
 export class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
 
 export async function api<T = unknown>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+  if (DEMO) {
+    try { return (await demoApi(path, init)) as T; } catch (e) { throw new ApiError((e as { status?: number }).status ?? 500, (e as Error).message); }
+  }
   const token = await getToken();
   const headers: Record<string, string> = { accept: "application/json", ...(init.headers as Record<string, string> | undefined) };
   if (init.json !== undefined) headers["content-type"] = "application/json";

@@ -1,0 +1,62 @@
+# Publishes a browser preview of the patient app (apps/mobile) to GitHub Pages.
+# It runs in demo mode with made-up patients and never calls the live server.
+name: Patient app web preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, web-preview]
+    paths:
+      - "apps/mobile/**"
+      - "packages/core/**"
+      - ".github/workflows/web-preview.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Export web preview
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_DEMO: "1"
+          EXPO_BASE_URL: /${{ github.event.repository.name }}
+        run: |
+          npx expo export --platform web --output-dir ../../preview
+          cp ../../preview/index.html ../../preview/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: preview
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
