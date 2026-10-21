@@ -21,7 +21,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
   return (
     <Shell user={user} clinic={user.clinic} active="patients">
       <section className="glass-lg p-5">
-        <form className="flex gap-2 mb-4"><input name="q" defaultValue={q} placeholder="ابحثي بالاسم أو الهاتف" /><button className="btn">بحث</button></form>
+        <div className="flex flex-wrap gap-2 mb-4"><form className="flex gap-2 flex-1 min-w-60"><input name="q" defaultValue={q} placeholder="ابحثي بالاسم أو الهاتف" /><button className="btn">بحث</button></form><Link href="/doctor/patients/new" className="btn">+ إضافة مريضة</Link></div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {patients.map((p) => {
             const preg = p.pregnancies[0];
