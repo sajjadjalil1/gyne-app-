@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Browser origins allowed to call the API (the Expo web preview, a hosted PWA). Native apps need no CORS. */
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://localhost:19006").split(",").map((s) => s.trim()).filter(Boolean);
+/**
+ * Browser origins allowed to call the API (the Expo web preview, a hosted PWA). Native apps need no CORS.
+ * The localhost previews are a development default only; in production nothing is allowed unless ALLOWED_ORIGINS lists it.
+ */
+const devOrigins = process.env.NODE_ENV === "production" ? "" : "http://localhost:8081,http://localhost:19006";
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? devOrigins).split(",").map((s) => s.trim()).filter(Boolean);
 
 function withCors(res: NextResponse, origin: string | null) {
   if (origin && allowedOrigins.includes(origin)) {
