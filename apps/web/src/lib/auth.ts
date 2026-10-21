@@ -77,6 +77,9 @@ export async function verifyToken(token: string): Promise<TokenClaims | null> {
     const sid = payload.sid as string, k = payload.k as string;
     const session = await prisma.session.findUnique({ where: { id: sid } });
     if (!session || session.revokedAt || session.expiresAt < new Date() || session.tokenHash !== sha256(k)) return null;
+    // A switched-off account loses every session at once, even one opened before it was switched off.
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { disabledAt: true } });
+    if (!user || user.disabledAt) return null;
     return { sub: payload.sub as string, role: payload.role as Role, sid };
   } catch {
     return null;

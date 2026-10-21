@@ -54,6 +54,7 @@ model User {
   recoveryCodes  String?   // JSON array of sha256 hashes, each usable once
   failedLogins   Int       @default(0)
   lockedUntil    DateTime?
+  disabledAt     DateTime? // set by the doctor when a staff member leaves: no login, no session
 }
 
 model Patient {

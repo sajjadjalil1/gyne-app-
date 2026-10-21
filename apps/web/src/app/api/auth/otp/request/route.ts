@@ -13,7 +13,7 @@ export const POST = handle(async (req) => {
   if (otpRateLimited(phone)) return fail(429, "طلبات كثيرة. حاولي بعد 15 دقيقة.");
   const user = await prisma.user.findUnique({ where: { phone } });
   // Always respond the same way so phone numbers cannot be enumerated.
-  if (user) {
+  if (user && !user.disabledAt) {
     const { code } = await issueOtp(phone);
     await sendSms(phone, `رمز الدخول إلى عيادتك: ${code}. صالح لخمس دقائق.`);
     await audit("otp.request", { actorId: user.id });

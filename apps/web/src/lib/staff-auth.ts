@@ -40,7 +40,7 @@ export async function readStep(token: string, step: Step): Promise<User> {
     const { payload } = await jwtVerify(token, stepKey(), { algorithms: ["HS256"] });
     if (payload.step !== step) throw new Error("wrong step");
     const user = await prisma.user.findUnique({ where: { id: payload.sub as string } });
-    if (!user || user.role === "PATIENT" || pwTag(user) !== payload.pw) throw new Error("stale");
+    if (!user || user.role === "PATIENT" || user.disabledAt || pwTag(user) !== payload.pw) throw new Error("stale");
     return user;
   } catch {
     throw new HttpError(401, "انتهت الخطوة. ابدأ تسجيل الدخول من جديد.");

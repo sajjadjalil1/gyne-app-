@@ -10,6 +10,6 @@ export async function requireStaffPage(allowed: Role[] = CLINICAL) {
   if (!allowed.includes(c.role)) redirect(homeFor(c.role));
   const user = await prisma.user.findUnique({ where: { id: c.sub }, include: { clinic: true } });
   // A dashboard session only counts once the account has finished password + authenticator setup.
-  if (!user || !user.totpEnabledAt) redirect("/login");
+  if (!user || !user.totpEnabledAt || user.disabledAt) redirect("/login");
   return user;
 }

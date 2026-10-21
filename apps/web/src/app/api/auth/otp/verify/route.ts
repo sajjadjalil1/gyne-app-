@@ -11,7 +11,7 @@ export const POST = handle(async (req) => {
   if (!phone) return fail(400, "رقم الهاتف غير صحيح");
   if (rateLimited(`verify-ip:${await clientIp()}`, 20, 15 * 60_000) || rateLimited(`verify:${phone}`, 10, 15 * 60_000)) return fail(429, "محاولات كثيرة. حاولي بعد 15 دقيقة.");
   const user = await prisma.user.findUnique({ where: { phone }, include: { patient: true } });
-  const ok = user ? await verifyOtp(phone, body.code) : false;
+  const ok = user && !user.disabledAt ? await verifyOtp(phone, body.code) : false;
   if (!ok || !user) {
     await audit("otp.fail", { meta: { phone: `${phone.slice(0, 4)}*****${phone.slice(-2)}` } });
     return fail(401, "الرمز غير صحيح أو منتهي");
