@@ -1,0 +1,138 @@
+# Builds the patient app (apps/mobile) for iPhone on a macOS runner.
+# - "simulator" always runs and only checks that the iOS app compiles (no Apple account needed).
+# - "testflight" runs only once the App Store Connect secrets exist; it signs the app with
+#   Xcode cloud-managed signing and uploads it to TestFlight.
+#
+# Repository secrets used by "testflight":
+#   APPLE_TEAM_ID              10-character team id from developer.apple.com > Membership
+#   ASC_KEY_ID                 App Store Connect API key id
+#   ASC_ISSUER_ID              App Store Connect issuer id
+#   ASC_KEY_P8_BASE64          the downloaded AuthKey_XXXX.p8 file, base64-encoded
+name: iOS build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-test-build]
+    paths:
+      - "apps/mobile/**"
+      - "packages/core/**"
+      - ".github/workflows/ios.yml"
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+env:
+  EXPO_PUBLIC_API_URL: https://ayadati-api.onrender.com
+  NODE_ENV: production
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate iOS project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform ios
+
+      - name: Build for simulator
+        working-directory: apps/mobile/ios
+        run: |
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" \
+            -configuration Release -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 40
+          test "${PIPESTATUS[0]}" -eq 0
+
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+    steps:
+      - name: Check Apple secrets
+        id: secrets
+        run: |
+          if [ -n "$APPLE_TEAM_ID" ] && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8_BASE64" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Apple secrets are not set yet; skipping TestFlight upload."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - if: steps.secrets.outputs.ready == 'true'
+        name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - if: steps.secrets.outputs.ready == 'true'
+        name: Generate iOS project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform ios
+
+      - if: steps.secrets.outputs.ready == 'true'
+        name: Archive and upload to TestFlight
+        working-directory: apps/mobile/ios
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          AUTH=(-allowProvisioningUpdates
+                -authenticationKeyPath "$KEY_PATH"
+                -authenticationKeyID "$ASC_KEY_ID"
+                -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" \
+            -configuration Release -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            "${AUTH[@]}" archive | tail -n 40
+          test "${PIPESTATUS[0]}" -eq 0
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            "${AUTH[@]}"
+
+          rm -f "$KEY_PATH"
