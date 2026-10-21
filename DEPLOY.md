@@ -30,7 +30,7 @@ Caddy terminates HTTPS for `DOMAIN`, migrations run on container start, and the 
 | `BOOTSTRAP_CLINIC_NAME`, `BOOTSTRAP_DOCTOR_NAME`, `BOOTSTRAP_DOCTOR_PHONE` | first-run clinic and doctor (ignored once any user exists) |
 | `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN` | OTP delivery gateway |
 | `OTP_DELIVERY=log` | pilot only: codes go to the log instead |
-| `ALLOWED_ORIGINS` | browser origins allowed on `/api` (native app needs none) |
+| `ALLOWED_ORIGINS` | browser origins allowed on `/api` (native app needs none; empty in production unless set) |
 | `RUN_MIGRATIONS_ON_START` | `0` when the platform runs `deploy/migrate.sh` itself (Render) |
 
 ## Mobile (EAS)
