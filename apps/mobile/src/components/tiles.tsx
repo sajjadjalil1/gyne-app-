@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import { T } from "./text";
 import { useTheme } from "@/hooks/use-theme";
+import { Icon } from "./icon";
 
 /** Big picture buttons: one emoji, two or three words, a 44px+ target. */
 export function Tile({ emoji, label, on, onPress, danger, wide, style }: { emoji: string; label: string; on?: boolean; onPress?: () => void; danger?: boolean; wide?: boolean; style?: ViewStyle }) {
@@ -33,7 +34,14 @@ export function Steps({ step, total }: { step: number; total: number }) {
 export function Status({ text, tone = "ok" }: { text: string; tone?: "ok" | "now" | "later" | "warn" | "crit" }) {
   const t = useTheme();
   const map = { ok: { bg: t.ok + "26", fg: t.ok }, now: { bg: t.lav, fg: t.white }, later: { bg: t.glass, fg: t.muted }, warn: { bg: t.warn + "33", fg: "#9a6b12" }, crit: { bg: t.crit + "22", fg: t.crit } }[tone];
-  return <View style={[s.status, { backgroundColor: map.bg }]}><T kind="label" color={map.fg} style={{ fontSize: 12 }}>{text}</T></View>;
+  const ticked = text.includes("✓");
+  const label = text.replace("✓", "").trim();
+  return (
+    <View style={[s.status, { backgroundColor: map.bg }]}>
+      {ticked && <Icon name="tick" size={14} color={map.fg} stroke={2.2} />}
+      {!!label && <T kind="label" color={map.fg} style={{ fontSize: 12 }}>{label}</T>}
+    </View>
+  );
 }
 
 const s = StyleSheet.create({
@@ -41,5 +49,5 @@ const s = StyleSheet.create({
   wide: { width: "48%" },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 8 },
   steps: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  status: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, alignSelf: "flex-start" },
+  status: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, alignSelf: "flex-start" },
 });

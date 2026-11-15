@@ -43,7 +43,7 @@ export default function Messages() {
       <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <View style={[s.head, { borderColor: t.glassLine }]}>
-            <View style={[s.avatar, { backgroundColor: t.lavSoft }]}><T style={{ fontSize: 22 }}>👩‍⚕️</T></View>
+            <View style={[s.avatar, { backgroundColor: t.lavSoft }]}><Icon name="stethoscope" size={22} color={t.lavDeep} /></View>
             <View style={{ flex: 1 }}><T kind="title">{data?.clinic.name ?? "العيادة"}</T><T kind="small">الممرضة ترد · {data?.clinic.nurseHours ?? "بأوقات الدوام"}</T></View>
             {phone && <Pressable onPress={() => Linking.openURL(`tel:${phone}`)} style={[s.call, { backgroundColor: t.okSoft }]} accessibilityLabel="اتصلي بالعيادة"><Icon name="phone" size={20} color={t.ok} /></Pressable>}
           </View>
@@ -54,12 +54,12 @@ export default function Messages() {
               <View key={m.id} style={[s.bubble, { backgroundColor: m.fromPatient ? t.lav : t.glassStrong, borderColor: m.urgent ? t.crit : t.glassLine, alignSelf: m.fromPatient ? "flex-start" : "flex-end" }]}>
                 {!m.fromPatient && m.authorName && <T kind="label" color={t.lavDeep}>{m.authorName}</T>}
                 <T color={m.fromPatient ? t.white : t.fg}>{m.body}</T>
-                <T kind="small" color={m.fromPatient ? "rgba(255,255,255,0.85)" : t.faint} style={{ fontSize: 11 }}>{relTime(d(m.createdAt)!)}{m.fromPatient ? (m.readAt ? " · ✓✓ شافتها الممرضة" : " · ✓") : ""}</T>
+                <T kind="small" color={m.fromPatient ? "rgba(255,255,255,0.85)" : t.faint} style={{ fontSize: 11 }}>{relTime(d(m.createdAt)!)}{m.fromPatient ? (m.readAt ? " · شافتها الممرضة" : " · وصلت") : ""}</T>
               </View>
             ))}
             {escalate && (
               <View style={[s.esc, { backgroundColor: t.critSoft, borderColor: t.crit }]}>
-                <T kind="title" color={t.crit}>🛑 كتبتي «{escalate.word}»{escalate.bpHigh ? " وضغطچ آخر مرة كان عالي" : ""}</T>
+                <T kind="title" color={t.crit}>كتبتي «{escalate.word}»{escalate.bpHigh ? " وضغطچ آخر مرة كان عالي" : ""}</T>
                 <T color={t.fg}>إذا الأعراض قوية لا تنتظرين الرد. خبّرنا الدكتورة.</T>
                 <Sos compact />
                 {phone && <Pressable onPress={() => Linking.openURL(`tel:${phone}`)} style={[s.callBtn, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}><Icon name="phone" size={18} color={t.fg} /><T kind="label">اتصلي بالعيادة</T></Pressable>}
@@ -67,10 +67,10 @@ export default function Messages() {
             )}
             {msgs.length === 0 && <T kind="small" style={{ textAlign: "center", marginTop: 40 }}>الممرضة تقرا رسالتچ وترد عليچ. إذا الأمر مستعجل اضغطي الزر الأحمر.</T>}
           </ScrollView>
-          <View style={{ paddingHorizontal: 16, paddingBottom: 6 }}><Pressable onPress={() => router.push("/emergency")}><T kind="label" color={t.crit} style={{ textAlign: "center" }}>مستعجل؟ 🆘 عندي مشكلة هسه</T></Pressable></View>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 6 }}><Pressable onPress={() => router.push("/emergency")}><T kind="label" color={t.crit} style={{ textAlign: "center" }}>مستعجل؟ عندي مشكلة هسه</T></Pressable></View>
           <View style={[s.composer, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}>
             <TextInput value={text} onChangeText={setText} placeholder="اكتبي رسالتچ…" placeholderTextColor={t.faint} style={[s.input, { color: t.fg }]} multiline maxLength={1000} />
-            <Pressable onPress={send} disabled={busy || !text.trim()} style={[s.send, { backgroundColor: t.lav, opacity: busy || !text.trim() ? 0.5 : 1 }]} accessibilityLabel="إرسال"><Icon name="share" size={20} color={t.white} /></Pressable>
+            <Pressable onPress={send} disabled={busy || !text.trim()} style={[s.send, { backgroundColor: t.lav, opacity: busy || !text.trim() ? 0.5 : 1 }]} accessibilityLabel="إرسال"><Icon name="send" size={20} color={t.white} /></Pressable>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

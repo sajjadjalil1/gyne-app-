@@ -9,8 +9,11 @@ import { listenForActions, setupNotifications } from "@/lib/reminders";
 
 SplashScreen.preventAutoHideAsync();
 
-// The whole app is Arabic. RTL is forced once; a reload applies it on native.
-if (Platform.OS !== "web" && !I18nManager.isRTL) { I18nManager.allowRTL(true); I18nManager.forceRTL(true); }
+// The whole app is Arabic. Native builds start right-to-left from the first launch (app.json extra.forcesRTL);
+// this call is a fallback for an older build. In the browser the page itself must be marked right-to-left,
+// otherwise every row (tab bar, headers, day strip) is laid out mirrored.
+if (Platform.OS === "web" && typeof document !== "undefined") { document.documentElement.dir = "rtl"; document.documentElement.lang = "ar"; }
+else if (!I18nManager.isRTL) { I18nManager.allowRTL(true); I18nManager.forceRTL(true); }
 
 function Gate() {
   const { ready, user } = useSession();

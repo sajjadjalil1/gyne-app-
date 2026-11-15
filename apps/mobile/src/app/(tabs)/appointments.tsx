@@ -46,7 +46,7 @@ export default function Appointments() {
             {(next.reason ?? APPT_PLAIN[next.type] ?? "مراجعة").split("·").map((x, i) => <T key={i}>• {x.trim()}</T>)}
           </View>
           {next.prep && (
-            <View style={[s.prep, { backgroundColor: t.warnSoft }]}><T kind="label">قبل الموعد</T>{next.prep.split(/[.؛]\s*/).filter(Boolean).map((x, i) => <T key={i}>{i === 0 ? "🍽️" : "🪪"} {x.trim()}</T>)}</View>
+            <View style={[s.prep, { backgroundColor: t.warnSoft }]}><T kind="label">قبل الموعد</T>{next.prep.split(/[.؛]\s*/).filter(Boolean).map((x, i) => <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.warn }} /><T style={{ flex: 1 }}>{x.trim()}</T></View>)}</View>
           )}
           <View style={{ flexDirection: "row", gap: 8 }}>
             {phone && <Act icon="phone" label="اتصلي" onPress={() => Linking.openURL(`tel:${phone}`)} />}
@@ -61,7 +61,7 @@ export default function Appointments() {
           {next.confirmed === false && <T kind="small" color={t.warn}>وصلت العيادة، راح يتصلون بيچ لتغيير الموعد.</T>}
         </Glass>
       ) : (
-        <Glass><T>ماكو موعد قادم. {phone ? "اتصلي بالعيادة أو راسليها لحجز موعد." : "راسلي العيادة لحجز موعد."}</T>{phone && <Button title="📞 اتصلي بالعيادة" ghost onPress={() => Linking.openURL(`tel:${phone}`)} />}</Glass>
+        <Glass><T>ماكو موعد قادم. {phone ? "اتصلي بالعيادة أو راسليها لحجز موعد." : "راسلي العيادة لحجز موعد."}</T>{phone && <Button icon="phone" title="اتصلي بالعيادة" ghost onPress={() => Linking.openURL(`tel:${phone}`)} />}</Glass>
       )}
       {data.nextAppointments.slice(1).map((a) => (
         <Glass key={a.id} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -90,7 +90,7 @@ export default function Appointments() {
             <Pressable onPress={() => Share.share({ message: `زيارة ${fmtDate(d(v.startsAt)!)}: ${[v.fetalHr ? `نبض الطفل ${v.fetalHr}` : null, v.weightKg ? `الوزن ${v.weightKg} كغم` : null, v.scanNote ? `السونار: ${v.scanNote}` : null].filter(Boolean).join("، ")} 💜` })} style={{ flexDirection: "row", gap: 4, alignItems: "center" }}><Icon name="share" size={16} color={t.lavDeep} /><T kind="label" color={t.lavDeep}>شاركي ويا زوجچ</T></Pressable>
           </Row>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            {v.fetalHr != null && <Stat big={`❤️ ${v.fetalHr}`} label="نبض الطفل" />}
+            {v.fetalHr != null && <Stat big={`${v.fetalHr}`} label="نبض الطفل" />}
             {v.weightKg != null && <Stat big={`${v.weightKg} كغم`} label="وزنچ" />}
             {v.scanNote && <Stat big={v.scanNote} label="السونار" />}
           </View>
@@ -104,7 +104,7 @@ export default function Appointments() {
 function PlanRow({ x, open, onPress }: { x: PlanItem; open: boolean; onPress: () => void }) {
   const t = useTheme();
   const tone = x.status === "done" ? "ok" : x.status === "now" ? "warn" : "later";
-  const text = x.status === "done" ? "تم ✓" : x.status === "now" ? "لازم تسويه هالأسبوع" : `جاي بـ${x.month}`;
+  const text = x.status === "done" ? "✓ تم" : x.status === "now" ? "لازم تسويه هالأسبوع" : `جاي بـ${x.month}`;
   return (
     <Pressable onPress={onPress} style={[s.plan, { borderColor: t.glassLine }]}>
       <Row><T style={{ flex: 1 }}>{x.title}</T><Status text={text} tone={tone} /></Row>

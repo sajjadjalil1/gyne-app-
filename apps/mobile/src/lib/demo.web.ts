@@ -63,6 +63,7 @@ export async function demoApi(path: string, init: RequestInit & { json?: unknown
     return { token: TOKEN_PREFIX + phone, user: { id: p.me.patient.id, name: p.me.patient.name, role: "PATIENT", patientId: p.me.patient.id } };
   }
   if (route === "/api/auth/logout") return { ok: true };
+  if (route === "/api/clinic") { const c = persona("07801234567").me.clinic; return { name: c.name, doctorName: c.doctorName }; }
 
   const p = current();
   if (!p) throw new DemoError(401, "سجّلي دخول");
