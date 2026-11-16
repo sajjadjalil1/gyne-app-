@@ -7,7 +7,7 @@ export type WorkItem = DerivedAlert & { patientName: string; patientAge: number;
 
 export async function buildWorklist(clinicId: string, now = new Date()) {
   const patients = await prisma.patient.findMany({
-    where: { clinicId },
+    where: { clinicId, deletedAt: null },
     include: {
       readings: { where: { takenAt: { gte: subDays(now, 14) } } },
       messages: { where: { fromPatient: true, readAt: null } },
@@ -30,9 +30,9 @@ export async function buildWorklist(clinicId: string, now = new Date()) {
   items.sort((a, b) => rank[a.severity] - rank[b.severity] || b.at.getTime() - a.at.getTime());
 
   const [todayAppts, pregnant, contraDue] = await Promise.all([
-    prisma.appointment.findMany({ where: { patient: { clinicId }, startsAt: { gte: startOfDay(now), lte: endOfDay(now) } }, include: { patient: true }, orderBy: { startsAt: "asc" } }),
-    prisma.pregnancy.count({ where: { active: true, patient: { clinicId } } }),
-    prisma.contraception.count({ where: { endedAt: null, patient: { clinicId }, expiresAt: { gte: now, lte: addDays(now, 30) } } }),
+    prisma.appointment.findMany({ where: { patient: { clinicId, deletedAt: null }, startsAt: { gte: startOfDay(now), lte: endOfDay(now) } }, include: { patient: true }, orderBy: { startsAt: "asc" } }),
+    prisma.pregnancy.count({ where: { active: true, patient: { clinicId, deletedAt: null } } }),
+    prisma.contraception.count({ where: { endedAt: null, patient: { clinicId, deletedAt: null }, expiresAt: { gte: now, lte: addDays(now, 30) } } }),
   ]);
   return {
     items,

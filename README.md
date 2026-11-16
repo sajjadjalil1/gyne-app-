@@ -57,6 +57,14 @@ Dependabot opens weekly update PRs and immediate security-fix PRs (`.github/depe
 The server runs on Baghdad time (`TZ=Asia/Baghdad` in the Dockerfile): "today", appointment times and pill times
 are worked out on the server. A test fails if that line is removed.
 
+## Privacy and deleting a patient
+
+- Public policy page: `/privacy` (needed for the App Store and Google Play). Text: `apps/web/src/app/privacy/page.tsx`.
+- The app asks for consent after the first login; raising `PRIVACY_VERSION` in `packages/core/src/privacy.ts` asks again.
+- «احذفي حسابي» in the app, or «حذف ملف المريضة» for the doctor, hides the file, switches off her login, cancels her
+  future appointments and frees her phone number. After 30 days erase for good (run monthly, from the Render shell):
+  `npm run patients:purge -w packages/db -- --yes` (without `--yes` it only counts).
+
 ## Deploy
 
 See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`) or `docker compose up -d` on your own server; the app is built with EAS.

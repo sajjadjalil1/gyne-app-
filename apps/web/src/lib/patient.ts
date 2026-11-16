@@ -1,7 +1,7 @@
 import { prisma } from "@gyne/db";
 import {
   adherence, ancPlain, antenatalSchedule, babySize, bpLevel, doseTimes, formatGA, formularyItem, gaOnDate, methodLabel, monthLabel, pillState,
-  predictCycle, pregnancyMonth, renewalReminderDate, rxActiveOn, trimester, type MethodKey, type PackType, type RxLike,
+  predictCycle, pregnancyMonth, PRIVACY_VERSION, renewalReminderDate, rxActiveOn, trimester, type MethodKey, type PackType, type RxLike,
 } from "@gyne/core";
 import { addDays, differenceInCalendarDays, startOfDay, subDays } from "date-fns";
 
@@ -90,6 +90,7 @@ export async function patientHome(patientId: string, now = new Date()) {
 
   return {
     patient: { id: p.id, name: p.name, firstName: p.name.split(" ")[0], phone: p.phone, wakeTime: p.wakeTime, sleepTime: p.sleepTime, ramadanMode: p.ramadanMode, detailedNotifications: p.detailedNotifications },
+    privacy: { version: PRIVACY_VERSION, accepted: p.consentVersion === PRIVACY_VERSION, consentedAt: p.consentedAt },
     clinic: { name: p.clinic.name, phone: p.clinic.phone, address: p.clinic.address, mapsUrl: p.clinic.mapsUrl, nurseHours: p.clinic.nurseHours, replyHours: p.clinic.replyHours, erHospital: p.clinic.erHospital, erMapsUrl: p.clinic.erMapsUrl, doctorName: doctor?.name ?? null, missedPillOne: p.clinic.missedPillOne, missedPillTwo: p.clinic.missedPillTwo, fastingAdvice: p.clinic.fastingAdvice },
     today: startOfDay(now),
     mode: preg ? "pregnancy" : pill ? "pill" : "cycle",

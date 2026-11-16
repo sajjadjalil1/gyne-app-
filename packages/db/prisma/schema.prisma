@@ -79,6 +79,12 @@ model Patient {
   ramadanMode    Boolean         @default(false)
   /// Lock-screen text stays generic unless the patient opts in
   detailedNotifications Boolean  @default(false)
+  /// Privacy: the policy version she agreed to in the app, and when
+  consentVersion String?
+  consentedAt    DateTime?
+  /// Soft delete: hidden everywhere and her login removed; erased for good by scripts/purge-deleted.ts after 30 days
+  deletedAt      DateTime?
+  deletedBy      String?         // "patient" or the staff user id
   prescriptions  Prescription[]
   doseEvents     DoseEvent[]
   dangerReports  DangerReport[]
@@ -90,6 +96,8 @@ model Patient {
   messages       Message[]
   alerts         Alert[]
   createdAt      DateTime        @default(now())
+
+  @@index([clinicId, deletedAt])
 }
 
 enum ApptType {

@@ -1,18 +1,20 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@gyne/db";
 import { z } from "zod";
 import { FORMULARY, TIMING_LABEL, formularyItem, type TimingRule } from "@gyne/core";
 import type { Role } from "@gyne/db";
 import { requireStaff } from "@/lib/api";
 import { audit } from "@/lib/auth";
+import { softDeletePatient } from "@/lib/patient-account";
 import { CLINICAL, PRESCRIBERS } from "@/lib/roles";
 
 /** The patient must belong to the caller's clinic and the caller's role must be allowed; anything else is a silent no-op. */
 async function ownPatient(patientId: string, roles: Role[] = CLINICAL) {
   const { user } = await requireStaff(roles).catch(() => ({ user: null }));
   if (!user) return null;
-  const patient = await prisma.patient.findFirst({ where: { id: patientId, clinicId: user.clinicId } });
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, clinicId: user.clinicId, deletedAt: null } });
   return patient ? { user, patient } : null;
 }
 
@@ -107,4 +109,14 @@ export async function setAppointmentPrep(formData: FormData) {
   if (!ctx) return;
   await prisma.appointment.updateMany({ where: { id, patientId }, data: { prep: String(formData.get("prep") ?? "").trim() || null, place: String(formData.get("place") ?? "").trim() || null } });
   revalidatePath(`/doctor/patients/${patientId}`);
+}
+
+/** Doctor only: remove a file (added by mistake, or the patient asked by phone). Needs the confirm box ticked. */
+export async function deletePatientFile(formData: FormData) {
+  const patientId = String(formData.get("patientId") ?? "");
+  if (formData.get("confirm") !== "yes") return;
+  const ctx = await ownPatient(patientId, PRESCRIBERS);
+  if (!ctx) return;
+  await softDeletePatient(ctx.patient.id, { actorId: ctx.user.id, who: "staff" });
+  redirect("/doctor/patients");
 }

@@ -1,23 +1,36 @@
-# Opens a pull request when a library we use gets a security fix or update.
-# Grouped so it is one PR a week per part, not dozens. Security fixes arrive as soon as they are published.
+# Opens pull requests when a library we use gets an update. Kept quiet on purpose:
+#  - security fixes arrive as soon as they are published when "Dependabot security updates" is on
+#    (repo Settings → Code security); a security fix that needs a major jump shows as an alert there instead;
+#  - routine updates: minor/patch only, grouped, once a week for npm and once a month for the rest;
+#  - big (major) version jumps are planned by hand, never opened automatically (Node stays on the 22 LTS line,
+#    Expo moves with its SDK).
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly, day: sunday, time: "06:00", timezone: Asia/Baghdad }
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react-native*"
     groups:
       server:
-        patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode"]
-        update-types: ["minor", "patch"]
-      app:
-        patterns: ["expo", "expo-*", "@expo/*", "react-native*"]
-        update-types: ["patch"]
+        patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
       tooling:
-        patterns: ["eslint*", "@types/*", "typescript", "tailwindcss", "@tailwindcss/*", "tsx"]
+        patterns: ["*"]
+        exclude-patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ["*"]
   - package-ecosystem: docker
     directory: /
     schedule: { interval: monthly }
+    ignore:
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]

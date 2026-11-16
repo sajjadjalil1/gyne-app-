@@ -12,7 +12,7 @@ export default async function Appointments() {
   const user = await requireStaffPage(FRONT_DESK);
   const now = new Date();
   const days = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(now), i));
-  const appts = await prisma.appointment.findMany({ where: { patient: { clinicId: user.clinicId }, startsAt: { gte: days[0], lte: endOfDay(days[6]) } }, include: { patient: true }, orderBy: { startsAt: "asc" } });
+  const appts = await prisma.appointment.findMany({ where: { patient: { clinicId: user.clinicId, deletedAt: null }, startsAt: { gte: days[0], lte: endOfDay(days[6]) } }, include: { patient: true }, orderBy: { startsAt: "asc" } });
   return (
     <Shell user={user} clinic={user.clinic} active="appts">
       <section className="glass-lg p-5">

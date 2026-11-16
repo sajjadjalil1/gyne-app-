@@ -33,6 +33,7 @@ function Gate() {
       <Stack.Screen name="pill" options={{ presentation: "card", animation: "slide_from_right" }} />
       <Stack.Screen name="week" options={{ presentation: "card", animation: "slide_from_right" }} />
       <Stack.Screen name="calendar" options={{ presentation: "card", animation: "slide_from_right" }} />
+      <Stack.Screen name="consent" options={{ gestureEnabled: false }} />
       <Stack.Screen name="settings" options={{ presentation: "card", animation: "slide_from_right" }} />
     </Stack>
   );
