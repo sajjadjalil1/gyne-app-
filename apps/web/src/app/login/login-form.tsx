@@ -100,7 +100,8 @@ export function LoginForm() {
     <main className="min-h-dvh grid place-items-center px-4 py-10">
       <div className="glass-lg w-full max-w-sm p-7 flex flex-col gap-5">
         <div>
-          <div className="w-12 h-12 rounded-full bg-lav text-white grid place-items-center text-lg font-bold mb-3">ع</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark.png" alt="عيادتي" width={56} height={46} className="mb-3" />
           <h1 className="text-xl font-semibold">{titles[step][0]}</h1>
           <p className="text-muted text-sm mt-1">{titles[step][1]}</p>
         </div>

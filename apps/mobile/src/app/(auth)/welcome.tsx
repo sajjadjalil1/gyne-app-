@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Background } from "@/components/background";
@@ -14,6 +14,9 @@ import { api } from "@/lib/api";
 export default function Welcome() {
   const t = useTheme();
   const router = useRouter();
+  // Small phones (iPhone SE) still fit the picture, title and button without scrolling.
+  const { height } = useWindowDimensions();
+  const picW = Math.min(280, Math.round(height * 0.36));
   // The doctor's real name builds trust; it comes from the clinic's own server (or the build), never a placeholder.
   const [doctor, setDoctor] = useState<string | null>(process.env.EXPO_PUBLIC_DOCTOR_NAME || null);
   useEffect(() => {
@@ -23,10 +26,10 @@ export default function Welcome() {
   return (
     <Background>
       <SafeAreaView style={s.safe}>
-        <View style={[s.brand, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}><View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="heart" size={16} color={t.lavDeep} stroke={2.2} /><T kind="label" color={t.lavDeep}>عيادتي</T></View></View>
+        <View style={[s.brand, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}><View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Image source={require("@/assets/images/logo-mark.png")} style={s.mark} accessibilityIgnoresInvertColors /><T kind="label" color={t.lavDeep}>عيادتي</T></View></View>
         <View style={s.hero}>
           <View style={[s.frame, { backgroundColor: t.glass, borderColor: t.glassLine }]}>
-            <Image source={require("@/assets/images/welcome.jpg")} style={s.illus} resizeMode="cover" accessibilityLabel="فتاة مرتاحة تتأمل" />
+            <Image source={require("@/assets/images/welcome.jpg")} style={[s.illus, { width: picW, height: Math.round((picW * 822) / 768) }]} resizeMode="cover" accessibilityLabel="بنية مرتاحة تشوف تلفونها" />
           </View>
           <T kind="h1" style={{ textAlign: "center", marginTop: 20, fontSize: 28 }}>عيادتچ بجيبچ</T>
           <T style={{ textAlign: "center", maxWidth: 300 }} color={t.muted}>مواعيدچ، حملچ أو دورتچ، وتحچين ويا العيادة</T>
@@ -47,6 +50,7 @@ const s = StyleSheet.create({
   brand: { alignSelf: "flex-start", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
   hero: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 },
   frame: { padding: 8, borderRadius: 32, borderWidth: 1 },
-  illus: { width: 250, height: 300, borderRadius: 26 },
+  illus: { borderRadius: 26 },
+  mark: { width: 22, height: 18 },
   doc: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
 });
