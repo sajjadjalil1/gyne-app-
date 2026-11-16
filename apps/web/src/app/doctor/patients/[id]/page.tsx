@@ -6,10 +6,10 @@ import { audit } from "@/lib/auth";
 import { Shell } from "@/components/shell";
 import { Avatar } from "@/components/severity";
 import { deriveAlerts } from "@/lib/alerts";
-import { adherence, ageYears, antenatalSchedule, DANGER_LABEL, fmtDate, fmtTime, formatGA, formularyItem, gaOnDate, methodLabel, pillState, predictCycle, TIMING_LABEL, APPT_TYPE_LABEL, FLOW_LABEL, relTime, type PackType, type RxLike } from "@gyne/core";
+import { adherence, ageYears, DELETE_GRACE_DAYS, antenatalSchedule, DANGER_LABEL, fmtDate, fmtTime, formatGA, formularyItem, gaOnDate, methodLabel, pillState, predictCycle, TIMING_LABEL, APPT_TYPE_LABEL, FLOW_LABEL, relTime, type PackType, type RxLike } from "@gyne/core";
 import { ReplyForm } from "./reply-form";
 import { RxForm } from "./rx-form";
-import { addPrescription, handleDanger, replyToPatient, reviewPrescription, setAppointmentPrep, stopPrescription } from "./actions";
+import { addPrescription, deletePatientFile, handleDanger, replyToPatient, reviewPrescription, setAppointmentPrep, stopPrescription } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const now = new Date();
   const p = await prisma.patient.findFirst({
-    where: { id, clinicId: user.clinicId },
+    where: { id, clinicId: user.clinicId, deletedAt: null },
     include: {
       readings: { orderBy: { takenAt: "desc" }, take: 40 },
       messages: { orderBy: { createdAt: "desc" }, take: 20 },
@@ -178,6 +178,17 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             {p.messages.length === 0 && <p className="text-faint text-sm">لا رسائل بعد.</p>}
           </div>
           <ReplyForm patientId={p.id} action={replyToPatient} />
+          {user.role === "DOCTOR" && (
+            <details className="mt-6 text-sm">
+              <summary className="cursor-pointer text-faint">حذف ملف المريضة</summary>
+              <form action={deletePatientFile} className="flex flex-col gap-2 mt-2">
+                <input type="hidden" name="patientId" value={p.id} />
+                <p className="text-muted">ينقفل حسابها بالتطبيق فوراً، ويختفي الملف من اللوحة، وتنلغى مواعيدها الجاية. المعلومات تنمسح نهائياً بعد {DELETE_GRACE_DAYS} يوم.</p>
+                <label className="flex items-center gap-2"><input type="checkbox" name="confirm" value="yes" required /> متأكدة، احذفي ملف {p.name}</label>
+                <button className="btn" style={{ background: "var(--crit)" }}>احذفي الملف</button>
+              </form>
+            </details>
+          )}
         </aside>
       </div>
     </Shell>

@@ -13,7 +13,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
   const { q } = await searchParams;
   if (q) await audit("patient.search", { actorId: user.id, meta: { q: q.slice(0, 40) } });
   const patients = await prisma.patient.findMany({
-    where: { clinicId: user.clinicId, ...(q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : {}) },
+    where: { clinicId: user.clinicId, deletedAt: null, ...(q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : {}) },
     include: { pregnancies: { where: { active: true } }, contraceptions: { where: { endedAt: null } } },
     orderBy: { name: "asc" },
     take: 200,

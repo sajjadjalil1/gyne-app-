@@ -21,6 +21,7 @@ export async function requirePatient() {
   const c = await requireAuth();
   if (c.role !== "PATIENT") throw new HttpError(403, "هذه الواجهة للمريضات فقط");
   const patient = await prisma.patient.findUnique({ where: { userId: c.sub } });
+  if (patient?.deletedAt) throw new HttpError(401, "هذا الحساب انحذف");
   if (!patient) throw new HttpError(404, "لا يوجد ملف مريضة لهذا الحساب");
   return { claims: c, patient };
 }

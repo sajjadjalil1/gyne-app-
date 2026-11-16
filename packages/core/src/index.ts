@@ -5,3 +5,4 @@ export * from "./ar";
 export * from "./plain";
 export * from "./meds";
 export * from "./time";
+export * from "./privacy";

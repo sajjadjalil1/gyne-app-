@@ -44,5 +44,8 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   return data as T;
 }
 
+/** The full privacy policy page on the server (the demo preview has no server of its own, so it opens the live one). */
+export const privacyUrl = () => `${DEMO ? "https://ayadati-api.onrender.com" : apiBase()}/privacy`;
+
 /** JSON dates arrive as strings; revive the ones we display. */
 export const d = (v: string | Date | null | undefined): Date | null => (v ? new Date(v) : null);

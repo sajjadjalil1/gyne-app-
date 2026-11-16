@@ -1,4 +1,5 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { useHome } from "@/lib/use-home";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -38,6 +39,9 @@ function GlassTabBar({ state, navigateToTab }: TabBarProps) {
 }
 
 export default function TabsLayout() {
+  const { data } = useHome();
+  // First open (or a new policy version): she agrees to the privacy policy before anything else.
+  if (data && !data.privacy?.accepted) return <Redirect href="/consent" />;
   return (
     <Tabs screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: "transparent" } }} tabBar={(p) => <GlassTabBar state={p.state} navigateToTab={p.navigateToTab} />}>
       <Tabs.Screen name="index" />
