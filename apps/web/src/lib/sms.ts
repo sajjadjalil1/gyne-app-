@@ -16,9 +16,23 @@ export async function sendSms(phone: string, text: string): Promise<void> {
     console.log(`[sms:dev] ${phone}: ${text}`);
     return;
   }
-  await fetch(url, {
+  const send = () => fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${process.env.SMS_WEBHOOK_TOKEN ?? ""}` },
     body: JSON.stringify({ to: phone, text }),
-  }).then((r) => { if (!r.ok) console.error("sms failed: HTTP", r.status); }, (e) => console.error("sms failed:", (e as Error).message));
+    // A stuck gateway must not hold the patient's login screen: give up after 10 seconds.
+    signal: AbortSignal.timeout(10_000),
+  });
+  // One retry after a short pause for network errors and gateway 5xx/429; a 4xx means the request itself is wrong.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const r = await send();
+      if (r.ok) return;
+      console.error(`sms failed: HTTP ${r.status} (attempt ${attempt})`);
+      if (r.status < 500 && r.status !== 429) return;
+    } catch (e) {
+      console.error(`sms failed: ${(e as Error).name} (attempt ${attempt})`);
+    }
+    if (attempt === 1) await new Promise((res) => setTimeout(res, 1_500));
+  }
 }
