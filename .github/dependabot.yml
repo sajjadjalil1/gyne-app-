@@ -1,5 +1,6 @@
 # Opens pull requests when a library we use gets an update. Kept quiet on purpose:
-#  - security fixes arrive as soon as they are published (any version);
+#  - security fixes arrive as soon as they are published when "Dependabot security updates" is on
+#    (repo Settings → Code security); a security fix that needs a major jump shows as an alert there instead;
 #  - routine updates: minor/patch only, grouped, once a week for npm and once a month for the rest;
 #  - big (major) version jumps are planned by hand, never opened automatically (Node stays on the 22 LTS line,
 #    Expo moves with its SDK).
