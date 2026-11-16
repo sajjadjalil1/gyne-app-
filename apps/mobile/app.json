@@ -14,13 +14,12 @@
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleDevelopmentRegion": "ar",
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "icon": "./assets/expo.icon"
+      }
     },
     "android": {
       "package": "com.gyne.clinic",
       "adaptiveIcon": {
-        "backgroundColor": "#e6d4f3",
+        "backgroundColor": "#EFE7FC",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -41,9 +40,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#e6d4f3",
+          "backgroundColor": "#F5F0FC",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 96
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#1C1826",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       "expo-secure-store",
