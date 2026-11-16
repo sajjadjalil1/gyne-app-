@@ -23,8 +23,10 @@ RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" AUTH_SECRET="bu
 FROM node:22-bookworm-slim AS run
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/* \
-  && npm i -g prisma@6.16.2 --no-audit --no-fund
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
+  && npm i -g prisma@6.19.3 --no-audit --no-fund
+# Clinic clock: "today", appointment times and pill times are worked out on the server, so it must run on Baghdad time, not UTC.
+# Node carries its own time-zone data, so no tzdata package is needed. Iraq has no daylight saving.
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 TZ=Asia/Baghdad
 COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /app/packages/db/prisma ./packages/db/prisma

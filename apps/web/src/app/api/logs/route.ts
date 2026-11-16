@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@gyne/db";
 import { startOfDay, subDays } from "date-fns";
+import { dayKey } from "@gyne/core";
 import { handle, json, parseBody, requirePatient } from "@/lib/api";
 import { audit } from "@/lib/auth";
 
@@ -31,7 +32,7 @@ const DANGER_KEYS = ["bleeding", "waters", "headache", "vision", "swelling", "ab
 export const PUT = handle(async (req) => {
   const { patient, claims } = await requirePatient();
   const b = await parseBody(req, LogSchema);
-  const date = startOfDay(new Date(b.date));
+  const date = dayKey(b.date);
   const preg = await prisma.pregnancy.findFirst({ where: { patientId: patient.id, active: true } });
   let symptoms = b.symptoms ?? [];
   let bleeding = b.bleeding ?? b.flow != null;

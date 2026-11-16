@@ -1,0 +1,23 @@
+# Opens a pull request when a library we use gets a security fix or update.
+# Grouped so it is one PR a week per part, not dozens. Security fixes arrive as soon as they are published.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: sunday, time: "06:00", timezone: Asia/Baghdad }
+    open-pull-requests-limit: 5
+    groups:
+      server:
+        patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode"]
+        update-types: ["minor", "patch"]
+      app:
+        patterns: ["expo", "expo-*", "@expo/*", "react-native*"]
+        update-types: ["patch"]
+      tooling:
+        patterns: ["eslint*", "@types/*", "typescript", "tailwindcss", "@tailwindcss/*", "tsx"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: monthly }

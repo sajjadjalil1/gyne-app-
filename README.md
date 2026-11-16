@@ -44,6 +44,19 @@ With `EXPOSE_DEV_OTP=1` the OTP is returned by the API and shown on the login sc
 Production env for `apps/web`: `DATABASE_URL`, `AUTH_SECRET` (32+ random chars), `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN`.
 Mobile: `EXPO_PUBLIC_API_URL=https://api.yourclinic.example`.
 
+## Tests and checks
+
+```bash
+npm test            # clinical rules (EDD, re-dating, cycle, contraception, pill pack, BP), clinic time, SMS retry
+npm run typecheck
+```
+
+Every pull request runs type check, lint, tests and the server build (`.github/workflows/checks.yml`).
+Dependabot opens weekly update PRs and immediate security-fix PRs (`.github/dependabot.yml`).
+
+The server runs on Baghdad time (`TZ=Asia/Baghdad` in the Dockerfile): "today", appointment times and pill times
+are worked out on the server. A test fails if that line is removed.
+
 ## Deploy
 
 See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`) or `docker compose up -d` on your own server; the app is built with EAS.

@@ -11,3 +11,5 @@ node_modules
 apps/mobile/assets
 apps/mobile/src
 apps/mobile/scripts
+**/test
+vitest.config.ts

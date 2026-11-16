@@ -12,6 +12,6 @@
     "staff:reset-login": "tsx scripts/reset-staff-login.ts"
   },
   "prisma": { "seed": "tsx prisma/seed.ts" },
-  "dependencies": { "@prisma/client": "6.16.2", "@gyne/core": "*" },
-  "devDependencies": { "prisma": "6.16.2", "tsx": "4.20.5" }
+  "dependencies": { "@prisma/client": "6.19.3", "@gyne/core": "*" },
+  "devDependencies": { "prisma": "6.19.3", "tsx": "4.20.5" }
 }

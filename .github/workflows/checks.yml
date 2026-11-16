@@ -1,0 +1,43 @@
+# Runs on every pull request and on main: the code must type-check, pass lint and the tests, and the server must build.
+# Set it as a required check on main so a broken change cannot be merged (Settings → Branches).
+name: checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Baghdad
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate --schema packages/db/prisma/schema.prisma
+      - name: Type check (server and app)
+        run: npm run typecheck
+      - name: Lint (server)
+        run: npm run lint -w apps/web
+      - name: Tests (pregnancy, cycle, contraception, clinic time, SMS)
+        run: npm test
+      - name: Server build
+        run: npm run build -w apps/web
+        env:
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          AUTH_SECRET: build-time-placeholder-not-used-at-runtime
+      # Report only: the remaining findings sit in the Prisma and Expo command-line tools (used at build/migrate time,
+      # never on requests). Dependabot opens the fix PRs; this step shows what is still open.
+      - name: Security audit (report)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@gyne/db";
+import { fmtDate } from "@gyne/core";
 import { handle, HttpError, json, parseBody, requirePatient } from "@/lib/api";
 import { audit } from "@/lib/auth";
 
@@ -11,7 +12,7 @@ export const POST = handle(async (req, ctx) => {
   const appt = await prisma.appointment.findFirst({ where: { id, patientId: patient.id, status: "SCHEDULED" } });
   if (!appt) throw new HttpError(404, "الموعد غير موجود");
   const updated = await prisma.appointment.update({ where: { id }, data: { confirmed: coming } });
-  if (!coming) await prisma.message.create({ data: { patientId: patient.id, fromPatient: true, body: `أريد أغيّر موعد ${appt.startsAt.toISOString().slice(0, 10)}`, auto: true } });
+  if (!coming) await prisma.message.create({ data: { patientId: patient.id, fromPatient: true, body: `أريد أغيّر موعد ${fmtDate(appt.startsAt, { weekday: true })}`, auto: true } });
   await audit("appointment.confirm", { actorId: claims.sub, target: patient.id, meta: { id, coming } });
   return json({ appointment: updated });
 });
