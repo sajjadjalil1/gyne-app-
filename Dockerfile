@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Builds the API + doctor dashboard (apps/web) only. The patient app is built by EAS, not here.
 
-FROM node:22-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
@@ -20,7 +20,7 @@ RUN npx prisma generate --schema packages/db/prisma/schema.prisma
 # Build never talks to the database; these values only satisfy the config checks.
 RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" AUTH_SECRET="build-time-placeholder-not-used-at-runtime" npm run build -w apps/web
 
-FROM node:22-bookworm-slim AS run
+FROM node:26-bookworm-slim AS run
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/* \
   && npm i -g prisma@6.19.3 --no-audit --no-fund
