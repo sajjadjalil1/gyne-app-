@@ -1,0 +1,55 @@
+# Uptime watch for the live server. Every 10 minutes GitHub asks /api/health (server + database).
+# If it fails 3 times in a row (about 1 minute apart) an issue titled "🔴 السيرفر واكف" is opened and assigned
+# to the owner, so GitHub sends an email and a phone notification. When the server answers again the issue is
+# closed with a "🟢 رجع" comment. No outside account is needed.
+# Note: GitHub pauses scheduled workflows after 60 days with no commits; any commit or a manual run resumes it.
+name: uptime
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  issues: write
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      URL: https://ayadati-api.onrender.com/api/health
+      TITLE: "🔴 السيرفر واكف"
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Ask the server
+        id: probe
+        run: |
+          for i in 1 2 3; do
+            body=$(curl -sS -m 20 -w '\n%{http_code}' "$URL" || true)
+            code=$(printf '%s' "$body" | tail -n1)
+            if [ "$code" = "200" ] && printf '%s' "$body" | grep -q '"db":true'; then
+              echo "up=1" >> "$GITHUB_OUTPUT"; echo "up (try $i)"; exit 0
+            fi
+            echo "try $i failed: HTTP ${code:-none}"; [ "$i" -lt 3 ] && sleep 60
+          done
+          echo "up=0" >> "$GITHUB_OUTPUT"
+          echo "detail=HTTP ${code:-no answer}" >> "$GITHUB_OUTPUT"
+      - name: Open or close the alert issue
+        run: |
+          gh label create server-down --color B60205 --description "Live server not answering" --force >/dev/null
+          open=$(gh issue list --state open --label server-down --json number --jq '.[0].number // empty')
+          now=$(TZ=Asia/Baghdad date '+%Y-%m-%d %H:%M')
+          if [ "${{ steps.probe.outputs.up }}" = "1" ]; then
+            if [ -n "$open" ]; then
+              gh issue comment "$open" --body "🟢 رجع السيرفر يشتغل ($now بتوقيت بغداد)."
+              gh issue close "$open"
+            fi
+          elif [ -z "$open" ]; then
+            gh issue create --title "$TITLE" --label server-down --assignee "${{ github.repository_owner }}" --body "$(printf '%s\n\n%s\n%s\n%s' \
+              "السيرفر ما جاوب 3 مرات ورا بعض ($now بتوقيت بغداد). الرد: ${{ steps.probe.outputs.detail }}." \
+              "شنو تسوي: افتح لوحة Render ← ayadati-api ← Logs وشوف آخر خطأ، أو گول لـClaude «السيرفر واكف»." \
+              "الفحص: $URL" \
+              "تنسد هاي الرسالة لوحدها أول ما يرجع السيرفر.")"
+          fi  # already open: stay quiet, one email per outage
