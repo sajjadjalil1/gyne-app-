@@ -37,7 +37,7 @@ export default function Week() {
       </Glass>
       <Glass style={{ gap: 6 }}>
         <T kind="title">عادي هالفترة</T>
-        {normal.map((x) => <T key={x}>🙂 {x}</T>)}
+        {normal.map((x) => <View key={x} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.ok }} /><T style={{ flex: 1 }}>{x}</T></View>)}
       </Glass>
       <Glass style={{ gap: 6, borderColor: t.rose }}>
         <T kind="title" color={t.crit}>مو عادي: اتصلي أو روحي للطوارئ</T>

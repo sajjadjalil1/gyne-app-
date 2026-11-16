@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Icon } from "./icon";
 import { T } from "./text";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -9,7 +10,7 @@ export function Sos({ compact }: { compact?: boolean }) {
   const router = useRouter();
   return (
     <Pressable onPress={() => router.push("/emergency")} accessibilityRole="button" accessibilityLabel="عندي مشكلة هسه" style={({ pressed }) => [s.btn, compact && s.compact, { backgroundColor: t.crit, opacity: pressed ? 0.85 : 1 }]}>
-      <T kind="title" color={t.white} style={{ textAlign: "center", fontSize: compact ? 14 : 17 }}>🆘 عندي مشكلة هسه</T>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}><Icon name="alert" size={compact ? 16 : 20} color={t.white} stroke={2.2} /><T kind="title" color={t.white} style={{ fontSize: compact ? 14 : 17 }}>عندي مشكلة هسه</T></View>
     </Pressable>
   );
 }

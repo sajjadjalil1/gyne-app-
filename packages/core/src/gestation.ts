@@ -10,8 +10,12 @@ export function gaFromDays(totalDays: number): GA {
   return { weeks: Math.floor(t / 7), days: t % 7, totalDays: t };
 }
 
+/**
+ * "28+2" is weeks+days. Inside Arabic text the bidi algorithm flips it to "2+28", which reads as a different
+ * pregnancy, so the label is wrapped in a left-to-right isolate (U+2066 … U+2069) that keeps it in order everywhere.
+ */
 export function formatGA(ga: GA): string {
-  return `${ga.weeks}+${ga.days}`;
+  return `\u2066${ga.weeks}+${ga.days}\u2069`;
 }
 
 /** Naegele: EDD = LMP + 280 days. */

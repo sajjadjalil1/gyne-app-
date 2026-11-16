@@ -30,7 +30,7 @@ export default function Emergency() {
   const chosen = list.filter((x) => picked.includes(x.key));
   const bpSevere = params.signs?.split(",").includes("bp");
   const er = bpSevere || chosen.some((x) => x.action === "ER");
-  const headline = !picked.length ? "اختاري شنو صاير وياچ" : er ? "لا تنتظرين: روحي للطوارئ هسه" : "اتصلي بالعيادة هسه";
+  const headline = !picked.length ? "مو متأكدة؟" : er ? "لا تنتظرين: روحي للطوارئ هسه" : "اتصلي بالعيادة هسه";
   useEffect(() => { speak(picked.length ? headline : "عندي مشكلة هسه. اختاري شنو صاير وياچ، وراح نگولچ شتسوين."); }, [headline, picked.length]);
 
   async function report(action: "ER" | "CALL") {
@@ -57,13 +57,13 @@ export default function Emergency() {
             <T kind="title" color={er ? t.crit : t.fg}>{headline}</T>
             {bpSevere && <T kind="small">ضغطچ 160/110 أو أكثر: هذا يحتاج مستشفى، مو انتظار.</T>}
             {!picked.length && !bpSevere && <T kind="small">إذا مو متأكدة، اتصلي بالعيادة وهم يگولولچ.</T>}
-            <Pressable onPress={goEr} style={[s.big, { backgroundColor: t.crit }]} accessibilityRole="button"><T kind="title" color={t.white} style={{ textAlign: "center", fontSize: 19 }}>🏥 روحي للطوارئ هسه</T></Pressable>
+            <Pressable onPress={goEr} style={[s.big, { backgroundColor: t.crit }]} accessibilityRole="button"><View style={s.btnRow}><Icon name="hospital" size={22} color={t.white} stroke={2} /><T kind="title" color={t.white} style={{ fontSize: 19 }}>روحي للطوارئ هسه</T></View></Pressable>
             {clinic?.erHospital && <T kind="small" style={{ textAlign: "center" }}>أقرب مستشفى ولادة: {clinic.erHospital}{clinic.erMapsUrl ? " · اضغطي للخريطة" : ""}</T>}
-            <Pressable onPress={call} disabled={!clinic?.phone} style={[s.big, { backgroundColor: t.glassStrong, borderWidth: 1, borderColor: t.glassLine, opacity: clinic?.phone ? 1 : 0.6 }]} accessibilityRole="button"><T kind="title" style={{ textAlign: "center", fontSize: 19 }}>📞 اتصلي بالعيادة هسه</T></Pressable>
+            <Pressable onPress={call} disabled={!clinic?.phone} style={[s.big, { backgroundColor: t.glassStrong, borderWidth: 1, borderColor: t.glassLine, opacity: clinic?.phone ? 1 : 0.6 }]} accessibilityRole="button"><View style={s.btnRow}><Icon name="phone" size={22} color={t.fg} stroke={2} /><T kind="title" style={{ fontSize: 19 }}>اتصلي بالعيادة هسه</T></View></Pressable>
             {!clinic?.phone && <T kind="small" style={{ textAlign: "center" }}>رقم العيادة يظهر هنا بعد أول دخول بالإنترنت.</T>}
             <View style={{ flexDirection: "row", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
-              <T kind="small" color={sent ? t.ok : t.muted}>{sent ? "✓ الدكتورة وصلها تنبيه" : "لما تضغطين زر، الدكتورة يوصلها تنبيه"}</T>
-              <T kind="small">· يشتغل بدون إنترنت</T>
+              <T kind="small" color={sent ? t.ok : t.muted}>{sent ? "الدكتورة وصلها تنبيه" : "لما تضغطين زر، الدكتورة يوصلها تنبيه"}</T>
+              <T kind="small">· الزرين يشتغلون بدون إنترنت</T>
             </View>
           </View>
         </ScrollView>
@@ -72,6 +72,7 @@ export default function Emergency() {
   );
 }
 const s = StyleSheet.create({
+  btnRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   content: { padding: 20, gap: 12, maxWidth: 520, width: "100%", alignSelf: "center" },
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   x: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },

@@ -5,6 +5,7 @@ import { fmtTime, TIMING_LABEL, type TimingRule } from "@gyne/core";
 import { Screen, Row } from "@/components/screen";
 import { Glass } from "@/components/glass";
 import { T } from "@/components/text";
+import { MedIcon } from "@/components/med-icon";
 import { Icon } from "@/components/icon";
 import { Listen } from "@/components/listen";
 import { Status } from "@/components/tiles";
@@ -32,19 +33,19 @@ export default function Meds() {
 
       <View style={[s.lock, { backgroundColor: "#2a2440" }]}>
         <Row><T kind="small" color="#cfc6e6">عيادتي · هسه</T><T kind="small" color="#cfc6e6">قفل الشاشة</T></Row>
-        <T color="#fff">تذكير من عيادتي 💜</T>
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>{["✓ أخذتها", "⏰ بعد نص ساعة", "ما راح آخذها"].map((x) => <View key={x} style={s.lockBtn}><T kind="label" color="#fff" style={{ fontSize: 11 }}>{x}</T></View>)}</View>
+        <T color="#fff">تذكير من عيادتي</T>
+        <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>{["أخذتها", "بعد نص ساعة", "ما راح آخذها"].map((x) => <View key={x} style={s.lockBtn}><T kind="label" color="#fff" style={{ fontSize: 11 }}>{x}</T></View>)}</View>
       </View>
 
       <Glass style={{ gap: 6 }}>
         <Row><T kind="title">{h.weekCovered} من {h.weekScheduled || 7} أيام هالأسبوع</T><View style={{ flexDirection: "row", gap: 4 }}>{h.weekDots.map((x, i) => <View key={i} style={[s.dot, { backgroundColor: x === "full" ? t.lav : x === "part" ? t.warn : x === "none" ? t.critSoft : t.lavSoft }]} />)}</View></Row>
-        <T kind="small">{h.weekCovered >= Math.max(1, h.weekScheduled) ? "عاشت إيدچ 💜 كل يوم يفرق" : "لا بأس، نكمل اليوم 💜"}</T>
+        <T kind="small">{h.weekCovered >= Math.max(1, h.weekScheduled) ? "عاشت إيدچ، كل يوم يفرق" : "لا بأس، نكمل اليوم"}</T>
       </Glass>
 
       {h.meds.map((m) => (
         <Glass key={m.id} style={{ gap: 8 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={[s.ic, { backgroundColor: t.lavSoft }]}><T style={{ fontSize: 24 }}>{m.emoji}</T></View>
+            <MedIcon drug={m.drug} size={48} />
             <View style={{ flex: 1 }}>
               <T kind="title">{m.label}{m.source === "SELF" && <T kind="small"> · أضفتيه بنفسچ</T>}</T>
               <T kind="small">{m.dose} · {m.doses.map((x) => fmtTime(d(x.dueAt)!)).join(" و ")}{m.timing !== "ANY" ? ` · ${TIMING_LABEL[m.timing as TimingRule]}` : ""}{m.note ? ` · ${m.note}` : ""}{m.stopNote ? ` · ${m.stopNote}` : ""}</T>
@@ -61,8 +62,8 @@ export default function Meds() {
                 </View>
                 {!x.status && (
                   <View style={{ flexDirection: "row", gap: 6 }}>
-                    <Pressable disabled={busy === m.id + x.dueAt} onPress={() => log(m, x.dueAt, "TAKEN")} style={[s.act, { backgroundColor: t.lav }]}><T kind="label" color={t.white}>✓ أخذتها</T></Pressable>
-                    <Pressable disabled={busy === m.id + x.dueAt} onPress={() => syncReminders(h)} style={[s.act, { backgroundColor: t.glassStrong, borderWidth: 1, borderColor: t.glassLine }]}><T kind="label">⏰ بعد نص ساعة</T></Pressable>
+                    <Pressable disabled={busy === m.id + x.dueAt} onPress={() => log(m, x.dueAt, "TAKEN")} style={[s.act, { backgroundColor: t.lav }]}><View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="tick" size={15} color={t.white} stroke={2.4} /><T kind="label" color={t.white}>أخذتها</T></View></Pressable>
+                    <Pressable disabled={busy === m.id + x.dueAt} onPress={() => syncReminders(h)} style={[s.act, { backgroundColor: t.glassStrong, borderWidth: 1, borderColor: t.glassLine }]}><View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="clock" size={15} color={t.fg} /><T kind="label">بعد نص ساعة</T></View></Pressable>
                     <Pressable disabled={busy === m.id + x.dueAt} onPress={() => log(m, x.dueAt, "SKIPPED", "ما آخذها")} style={[s.act, { backgroundColor: t.glassStrong, borderWidth: 1, borderColor: t.glassLine }]}><T kind="label">ما آخذها</T></Pressable>
                   </View>
                 )}
@@ -73,7 +74,7 @@ export default function Meds() {
         </Glass>
       ))}
       {h.meds.length === 0 && <Glass><T>ماكو أدوية موصوفة هسه. الدكتورة تضيفها من العيادة وتظهر هنا ويا التذكيرات.</T></Glass>}
-      {h.finishedMeds.map((f) => <Glass key={f.label} style={{ backgroundColor: t.okSoft, borderColor: t.ok }}><T kind="small" color={t.fg}>✓ {f.label} خلص بوقته (الأسبوع {f.stopWeek})</T></Glass>)}
+      {h.finishedMeds.map((f) => <Glass key={f.label} style={{ backgroundColor: t.okSoft, borderColor: t.ok }}><T kind="small" color={t.fg}>{f.label} خلص بوقته (الأسبوع {f.stopWeek})</T></Glass>)}
       <Glass style={{ gap: 4 }}><T kind="small">الجرعة من الدكتورة. إذا تريدين تغيّرين شي، راسلي العيادة.</T></Glass>
 
       <Glass style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

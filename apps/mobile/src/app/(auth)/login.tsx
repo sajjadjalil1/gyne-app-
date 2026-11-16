@@ -54,7 +54,7 @@ export default function Login() {
     <Background>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.wrap}>
-          <View style={[s.brand, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}><T kind="label" color={t.lavDeep}>💜 عيادتي</T></View>
+          <View style={[s.brand, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}><View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="heart" size={16} color={t.lavDeep} stroke={2.2} /><T kind="label" color={t.lavDeep}>عيادتي</T></View></View>
           <Glass style={s.card}>
             <View style={[s.mark, { backgroundColor: t.lav }]}><Icon name={step === "phone" ? "phone" : "chat"} size={26} color={t.white} /></View>
             {step === "phone" ? (
@@ -62,7 +62,7 @@ export default function Login() {
                 <T kind="h1" style={{ textAlign: "center" }}>اكتبي رقم موبايلچ</T>
                 <T kind="small" style={{ textAlign: "center" }}>راح توصلچ رسالة من <T kind="label">عيادتي</T> بيها ٦ أرقام. ما تحتاجين كلمة سر.</T>
                 <TextInput value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" placeholder="0780 123 4567" placeholderTextColor={t.faint} style={[s.input, { backgroundColor: t.glassStrong, borderColor: t.glassLine, color: t.fg }]} autoFocus accessibilityLabel="رقم الموبايل" />
-                {phoneOk && <T kind="small" style={{ textAlign: "center" }} color={t.ok}>✓ {pretty(phone)}</T>}
+                {phoneOk && <T kind="small" style={{ textAlign: "center" }} color={t.ok}>{pretty(phone)}</T>}
                 {DEMO && (
                   <View style={s.demo}>
                     <T kind="small" style={{ textAlign: "center" }}>نسخة تجريبية: اختاري مريضة وهمية</T>
@@ -110,7 +110,7 @@ export default function Login() {
 }
 const s = StyleSheet.create({
   wrap: { flex: 1, justifyContent: "center", padding: 20, gap: 14, maxWidth: 480, width: "100%", alignSelf: "center" },
-  brand: { alignSelf: "flex-end", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
+  brand: { alignSelf: "flex-start", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
   card: { gap: 14 },
   mark: { width: 64, height: 64, borderRadius: 20, alignItems: "center", justifyContent: "center", alignSelf: "center" },
   input: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, fontSize: 22, fontFamily: Fonts.semibold, textAlign: "center", writingDirection: "ltr" },

@@ -31,14 +31,14 @@ export default function Me() {
       </Glass>
       {rows.map((r) => (
         <GlassPress key={r.label} onPress={() => (r.href ? router.push(r.href) : r.onPress?.())} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 }}>
-          <View style={[s.ic, { backgroundColor: t.lavSoft }]}><T style={{ fontSize: 22 }}>{r.emoji}</T></View>
+          <View style={[s.ic, { backgroundColor: t.lavSoft }]}><Icon name={r.icon} size={22} color={t.lavDeep} /></View>
           <View style={{ flex: 1 }}><T kind="title">{r.label}</T>{r.sub && <T kind="small">{r.sub}</T>}</View>
           <Icon name="next" size={18} color={t.faint} />
         </GlassPress>
       ))}
       <Glass style={{ gap: 6 }}>
         <T kind="label">خصوصيتچ</T>
-        <T kind="small">رسائلچ وتسجيلاتچ تشوفها الدكتورة والممرضة بس. التنبيه على الشاشة يطلع «تذكير من عيادتي 💜» ومحد يعرف شنو الدوا.</T>
+        <T kind="small">رسائلچ وتسجيلاتچ تشوفها الدكتورة والممرضة بس. التنبيه على الشاشة يطلع «تذكير من عيادتي» ومحد يعرف شنو الدوا.</T>
       </Glass>
       <Pressable onPress={() => Alert.alert("تطلعين من الحساب؟", "راح تحتاجين رمز جديد برسالة حتى ترجعين.", [{ text: "لا", style: "cancel" }, { text: "ايه، طلعيني", style: "destructive", onPress: signOut }])} style={{ alignSelf: "center", paddingVertical: 10 }}>
         <T kind="label" color={t.faint}>طلعي من الحساب</T>

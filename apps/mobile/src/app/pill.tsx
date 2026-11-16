@@ -38,7 +38,7 @@ export default function PillScreen() {
         <View style={s.blister}>
           {Array.from({ length: pill.activeCount }, (_, i) => {
             const today = i === todayIdx, known = i < todayIdx && i >= todayIdx - 6, ok = takenDays.has(i) || (today && pill.takenToday);
-            return <View key={i} style={[s.cell, { backgroundColor: ok ? t.lav : today ? t.roseSoft : known ? t.critSoft : t.glassStrong, borderColor: today ? t.lav : t.glassLine }]}><T kind="label" color={ok ? t.white : t.fg} style={{ textAlign: "center", fontSize: 12 }}>{ok ? "✓" : i + 1}</T></View>;
+            return <View key={i} style={[s.cell, { backgroundColor: ok ? t.lav : today ? t.roseSoft : known ? t.critSoft : t.glassStrong, borderColor: today ? t.lav : t.glassLine }]}>{ok ? <Icon name="tick" size={16} color={t.white} stroke={2.4} /> : <T kind="label" color={t.fg} style={{ textAlign: "center", fontSize: 12 }}>{i + 1}</T>}</View>;
           })}
         </View>
         {pill.freeFrom && pill.freeTo && <T kind="small">أسبوع بدون حبوب: {fmtDate(d(pill.freeFrom)!, { year: false })} لـ {fmtDate(d(pill.freeTo)!, { year: false })}</T>}

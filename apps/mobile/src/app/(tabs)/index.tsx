@@ -7,6 +7,7 @@ import { Screen, Row } from "@/components/screen";
 import { Glass, GlassPress } from "@/components/glass";
 import { Ring } from "@/components/ring";
 import { T } from "@/components/text";
+import { MedIcon } from "@/components/med-icon";
 import { Icon } from "@/components/icon";
 import { Sos } from "@/components/sos";
 import { Status } from "@/components/tiles";
@@ -29,7 +30,7 @@ export default function HomeScreen() {
   return (
     <Screen refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={t.lav} />}>
       <Row>
-        <View><T kind="small">{data ? `${greeting()} ${data.patient.firstName} 💜` : "مرحباً"}</T><T kind="title">{fmtDate(today, { weekday: true, year: false })}</T></View>
+        <View><T kind="small">{data ? `${greeting()} ${data.patient.firstName}` : "مرحباً"}</T><T kind="title">{fmtDate(today, { weekday: true, year: false })}</T></View>
         <Pressable onPress={() => router.push("/(tabs)/messages")} style={[s.round, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]} accessibilityLabel="الرسائل">
           <Icon name="bell" size={20} color={t.fg} />
           {!!data?.unreadMessages && <View style={[s.badge, { backgroundColor: t.crit }]} />}
@@ -53,14 +54,14 @@ function Banner({ data }: { data: Home }) {
     const txt = BP_TEXT[data.bp.level].advice;
     return (
       <Glass style={{ backgroundColor: sev ? t.critSoft : t.warnSoft, borderColor: sev ? t.crit : t.warn, gap: 6 }}>
-        <Row><T kind="title" color={sev ? t.crit : "#9a6b12"}>⚠️ الضغط {BP_TEXT[data.bp.level].word} · {data.bp.systolic}/{data.bp.diastolic}</T><Listen text={txt} compact /></Row>
+        <Row><T kind="title" color={sev ? t.crit : "#9a6b12"}>الضغط {BP_TEXT[data.bp.level].word} · {data.bp.systolic}/{data.bp.diastolic}</T><Listen text={txt} compact /></Row>
         <T kind="small" color={t.fg}>{txt}</T>
         {sev && <Pressable onPress={() => router.push("/emergency")}><T kind="label" color={t.crit}>افتحي زر المساعدة ←</T></Pressable>}
       </Glass>
     );
   }
   if (data.danger && !data.danger.handled && differenceInCalendarDays(new Date(), d(data.danger.at)!) === 0) {
-    return <Glass style={{ backgroundColor: t.okSoft, borderColor: t.ok }}><T kind="small" color={t.fg}>✓ العيادة وصلها تنبيهچ. إذا ما اتصلوا بيچ خلال ساعة، اتصلي إنتِ.</T></Glass>;
+    return <Glass style={{ backgroundColor: t.okSoft, borderColor: t.ok }}><T kind="small" color={t.fg}>العيادة وصلها تنبيهچ. إذا ما اتصلوا بيچ خلال ساعة، اتصلي إنتِ.</T></Glass>;
   }
   return null;
 }
@@ -90,7 +91,7 @@ function PregnancyHome({ data }: { data: Home }) {
             <GlassPress onPress={() => router.push("/week")} style={{ padding: 10, gap: 2 }}>
               <T style={{ fontSize: 26, textAlign: "right", lineHeight: 30 }}>{p.baby.emoji}</T>
               <T kind="label">طفلچ بحجم {p.baby.label}</T>
-              <T kind="small" color={t.lavDeep}>شوفي هالأسبوع ←</T>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}><T kind="small" color={t.lavDeep}>شوفي هالأسبوع</T><Icon name="next" size={14} color={t.lavDeep} /></View>
             </GlassPress>
           </View>
         </View>
@@ -100,7 +101,7 @@ function PregnancyHome({ data }: { data: Home }) {
         <GlassPress onPress={() => router.push("/(tabs)/appointments")} style={{ backgroundColor: t.lav, borderColor: "transparent", gap: 4 }}>
           <Row><T kind="label" color={t.white}>موعدچ الجاي</T><T kind="label" color={t.white}>بعد {daysLabel(differenceInCalendarDays(d(appt.startsAt)!, new Date()))}</T></Row>
           <T kind="title" color={t.white}>{weekdayName(d(appt.startsAt)!)} {fmtDate(d(appt.startsAt)!, { year: false })} · {fmtTime(d(appt.startsAt)!)}</T>
-          {appt.prep && <View style={[s.prep, { backgroundColor: "rgba(255,255,255,0.22)" }]}><T kind="small" color={t.white}>🍽️ {appt.prep}</T></View>}
+          {appt.prep && <View style={[s.prep, { backgroundColor: "rgba(255,255,255,0.22)" }]}><View style={{ flexDirection: "row", gap: 6, alignItems: "flex-start" }}><Icon name="info" size={16} color={t.white} /><T kind="small" color={t.white} style={{ flex: 1 }}>{appt.prep}</T></View></View>}
         </GlassPress>
       ) : (
         <Glass><T kind="small">ماكو موعد قادم بعد. العيادة تحدد الموعد الجاي وتشوفينه هنا.</T></Glass>
@@ -111,7 +112,7 @@ function PregnancyHome({ data }: { data: Home }) {
         {tasks.map((x) => (
           <Pressable key={x.key} onPress={x.go} style={[s.task, { borderColor: t.glassLine }]}>
             <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <T style={{ fontSize: 22 }}>{x.emoji}</T>
+              <MedIcon drug={x.drug} task={x.task} size={36} />
               <T style={{ flex: 1 }}>{x.label}</T>
             </View>
             <Status text={x.status} tone={x.done ? "ok" : x.urgent ? "warn" : "now"} />
@@ -124,17 +125,17 @@ function PregnancyHome({ data }: { data: Home }) {
 
 function useTasks(data: Home) {
   const router = useRouter();
-  const out: { key: string; emoji: string; label: string; status: string; done: boolean; urgent?: boolean; go: () => void }[] = [];
+  const out: { key: string; drug?: string; task?: string; label: string; status: string; done: boolean; urgent?: boolean; go: () => void }[] = [];
   for (const m of data.meds) {
     const pending = m.doses.find((x) => !x.status);
     const takenAll = m.doses.length > 0 && m.doses.every((x) => x.status === "TAKEN" || x.status === "LATE");
-    out.push({ key: m.id, emoji: m.emoji, label: m.label, status: takenAll ? "✓ أخذتيها" : pending ? (new Date(pending.dueAt) <= new Date() ? "هسه" : fmtTime(new Date(pending.dueAt))) : "✓", done: takenAll, go: () => router.push("/meds") });
+    out.push({ key: m.id, drug: m.drug, label: m.label, status: takenAll ? "✓ أخذتيها" : pending ? (new Date(pending.dueAt) <= new Date() ? "هسه" : fmtTime(new Date(pending.dueAt))) : "✓", done: takenAll, go: () => router.push("/meds") });
   }
   if (data.mode === "pregnancy") {
     const bp = data.bp;
     const again = !!bp && bp.level !== "ok" && bp.today;
-    out.push({ key: "bp", emoji: "🩺", label: again ? "قيسي الضغط مرة ثانية" : "قيسي الضغط", status: bp?.today && !again ? `✓ ${bp.systolic}/${bp.diastolic}` : "هسه", done: !!bp?.today && !again, urgent: again, go: () => router.push({ pathname: "/(tabs)/daily", params: { step: "bp" } }) });
-    if (data.pregnancy && data.pregnancy.ga.weeks >= 28) out.push({ key: "kicks", emoji: "👶", label: "عدّي حركات الطفل", status: data.kicks?.today ? `✓ ${data.kicks.count}` : "اليوم", done: !!data.kicks?.today, go: () => router.push({ pathname: "/(tabs)/daily", params: { step: "kicks" } }) });
+    out.push({ key: "bp", task: "bp", label: again ? "قيسي الضغط مرة ثانية" : "قيسي الضغط", status: bp?.today && !again ? `✓ ${bp.systolic}/${bp.diastolic}` : "هسه", done: !!bp?.today && !again, urgent: again, go: () => router.push({ pathname: "/(tabs)/daily", params: { step: "bp" } }) });
+    if (data.pregnancy && data.pregnancy.ga.weeks >= 28) out.push({ key: "kicks", task: "kicks", label: "عدّي حركات الطفل", status: data.kicks?.today ? `✓ ${data.kicks.count}` : "اليوم", done: !!data.kicks?.today, go: () => router.push({ pathname: "/(tabs)/daily", params: { step: "kicks" } }) });
   }
   return out;
 }
@@ -146,7 +147,8 @@ function CycleHome({ data }: { data: Home }) {
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 2));
   const c = data.cycle;
   const next = d(c?.nextPeriod);
-  const fw = c?.fertileWindow;
+  // Fertile days are meaningless (and alarming) for a patient on the pill: only cycle followers see them.
+  const fw = data.mode === "cycle" ? c?.fertileWindow : null;
   const inFertile = fw && today >= d(fw.from)! && today <= d(fw.to)!;
   const pill = data.contraception?.pill;
   const appt = data.nextAppointments[0];
@@ -171,26 +173,26 @@ function CycleHome({ data }: { data: Home }) {
           <T kind="big">{c?.dayOfCycle ?? "؟"}</T>
           <T kind="small">من دورتچ</T>
         </Ring>
-        {inFertile ? <View style={[s.soft, { backgroundColor: t.okSoft, alignSelf: "stretch" }]}><T kind="small" color={t.fg} style={{ textAlign: "center" }}>🌱 هسه بالأيام اللي ممكن يصير بيها حمل</T></View> : c?.lastPeriodStart ? null : <T kind="small">سجّلي أول يوم دورة من «يومي» حتى نحسب لچ</T>}
+        {inFertile ? <View style={[s.soft, { backgroundColor: t.okSoft, alignSelf: "stretch" }]}><View style={{ flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center" }}><Icon name="sprout" size={16} color={t.ok} /><T kind="small" color={t.fg}>هسه بالأيام اللي ممكن يصير بيها حمل</T></View></View> : c?.lastPeriodStart ? null : <T kind="small">سجّلي أول يوم دورة من «يومي» حتى نحسب لچ</T>}
         <View style={{ flexDirection: "row", gap: 8, alignSelf: "stretch" }}>
-          <View style={[s.soft, { flex: 1, backgroundColor: t.glass }]}><T kind="small">الدورة الجاية</T><T kind="title">{c?.daysToNextPeriod != null ? `بعد ${daysLabel(Math.max(0, c.daysToNextPeriod))} 🩸` : "—"}</T></View>
+          <View style={[s.soft, { flex: 1, backgroundColor: t.glass }]}><T kind="small">الدورة الجاية</T><T kind="title">{c?.daysToNextPeriod != null ? `بعد ${daysLabel(Math.max(0, c.daysToNextPeriod))}` : "—"}</T></View>
           <View style={[s.soft, { flex: 1, backgroundColor: t.glass }]}><T kind="small">آخر دورة</T><T kind="title">{c?.lastPeriodStart ? fmtDate(d(c.lastPeriodStart)!, { year: false }) : "—"}</T></View>
         </View>
       </Glass>
       {pill && (
         <GlassPress onPress={() => router.push("/pill")} style={{ gap: 4 }}>
-          <Row><T kind="title">💊 حبوب منع الحمل</T>{pill.takenToday ? <Status text="✓ أخذت حبة اليوم" /> : pill.inFree ? <Status text="أسبوع بدون حبوب" tone="later" /> : <Status text="بعد" tone="now" />}</Row>
+          <Row><View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><MedIcon size={30} /><T kind="title">حبوب منع الحمل</T></View>{pill.takenToday ? <Status text="✓ أخذت حبة اليوم" /> : pill.inFree ? <Status text="أسبوع بدون حبوب" tone="later" /> : <Status text="بعد" tone="now" />}</Row>
           <T kind="small">{pill.inFree ? `الباكيت الجاي ${fmtDate(d(pill.nextPackAt)!, { year: false })}` : `حبة اليوم: رقم ${pill.pillNumber} · كل يوم الساعة ${pill.pillTime}`}</T>
         </GlassPress>
       )}
       <GlassPress onPress={() => router.push("/(tabs)/daily")} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <View style={[s.ic, { backgroundColor: t.lavSoft }]}><T style={{ fontSize: 24 }}>📝</T></View>
-        <View style={{ flex: 1 }}><T kind="title">{data.todayLog ? "سجّلتي يومچ ✓" : "سجّلي يومچ"}</T><T kind="small">{data.todayLog ? "تگدرين تغيّرين" : "3 أسئلة بس، تاخذ دقيقة"}</T></View>
+        <View style={[s.ic, { backgroundColor: t.lavSoft }]}><Icon name="note" size={24} color={t.lavDeep} /></View>
+        <View style={{ flex: 1 }}><T kind="title">{data.todayLog ? "سجّلتي يومچ" : "سجّلي يومچ"}</T><T kind="small">{data.todayLog ? "تگدرين تغيّرين" : "3 أسئلة بس، تاخذ دقيقة"}</T></View>
         <View style={[s.go, { backgroundColor: t.lav }]}><T kind="label" color={t.white}>{data.todayLog ? "غيّري" : "يلا"}</T></View>
       </GlassPress>
       {appt && (
         <GlassPress onPress={() => router.push("/(tabs)/appointments")} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={[s.ic, { backgroundColor: t.lavSoft }]}><T style={{ fontSize: 24 }}>📅</T></View>
+          <View style={[s.ic, { backgroundColor: t.lavSoft }]}><Icon name="calendar" size={24} color={t.lavDeep} /></View>
           <View style={{ flex: 1 }}><T kind="title">{appt.reason ?? "موعد بالعيادة"}</T><T kind="small">{weekdayName(d(appt.startsAt)!)} {fmtDate(d(appt.startsAt)!, { year: false })} · {fmtTime(d(appt.startsAt)!)}</T></View>
           <Status text={`بعد ${daysLabel(differenceInCalendarDays(d(appt.startsAt)!, new Date()))}`} tone="later" />
         </GlassPress>

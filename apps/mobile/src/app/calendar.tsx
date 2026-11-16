@@ -26,8 +26,11 @@ export default function Calendar() {
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }), [month]);
   const lead = getDay(startOfMonth(month));
   const today = new Date();
-  const next = d(data?.cycle?.nextPeriod);
-  const fw = data?.cycle?.fertileWindow;
+  // Period prediction and the fertile window only mean something for a patient following her cycle:
+  // a pregnant patient must never see them, and on the pill the "fertile" days are not real.
+  const cycleMode = data?.mode === "cycle";
+  const next = cycleMode ? d(data?.cycle?.nextPeriod) : null;
+  const fw = cycleMode ? data?.cycle?.fertileWindow : null;
   const log = logs.find((l) => isSameDay(d(l.date)!, sel));
   const words = (l: Log) => [
     l.mood && (MOODS_SIMPLE.find((m) => m.key === l.mood) ?? FEELINGS.find((m) => m.key === l.mood)) ? `${(MOODS_SIMPLE.find((m) => m.key === l.mood) ?? FEELINGS.find((m) => m.key === l.mood))!.emoji} ${(MOODS_SIMPLE.find((m) => m.key === l.mood) ?? FEELINGS.find((m) => m.key === l.mood))!.label}` : null,
@@ -42,8 +45,8 @@ export default function Calendar() {
       <Glass style={{ gap: 10 }}>
         <T kind="title" style={{ textAlign: "center" }}>{MONTHS[month.getMonth()]} {month.getFullYear()}</T>
         <Row>
-          <GlassPress onPress={() => setMonth(addMonths(month, -1))} style={s.arrow}><T kind="label">→ الشهر اللي فات</T></GlassPress>
-          <GlassPress onPress={() => setMonth(addMonths(month, 1))} style={s.arrow}><T kind="label">الشهر الجاي ←</T></GlassPress>
+          <GlassPress onPress={() => setMonth(addMonths(month, -1))} style={[s.arrow, s.arrowRow]}><Icon name="back" size={16} color={t.muted} /><T kind="label">الشهر اللي فات</T></GlassPress>
+          <GlassPress onPress={() => setMonth(addMonths(month, 1))} style={[s.arrow, s.arrowRow]}><T kind="label">الشهر الجاي</T><Icon name="next" size={16} color={t.muted} /></GlassPress>
         </Row>
         <View style={s.grid}>
           {["سبت", "جمعة", "خميس", "أربعاء", "ثلاثاء", "إثنين", "أحد"].reverse().map((w) => <T key={w} kind="label" style={s.cellHead}>{w}</T>)}
@@ -63,7 +66,10 @@ export default function Calendar() {
             );
           })}
         </View>
-        <View style={s.legend}><Legend c={t.rose} l="🩸 دورة" /><Legend c={t.roseSoft} l="🩸 دورة متوقعة" /><Legend c={t.okSoft} l="🌱 ممكن يصير حمل" /></View>
+        <View style={s.legend}>
+          {cycleMode ? <><Legend c={t.rose} l="دورة" /><Legend c={t.roseSoft} l="دورة متوقعة" /><Legend c={t.okSoft} l="ممكن يصير حمل" /></>
+            : <><Legend c={t.rose} l="دم" /><Legend c={t.lav} l="سجّلتي بهاليوم" /></>}
+        </View>
       </Glass>
       <Glass style={{ gap: 4 }}>
         <Row><T kind="title">{fmtDate(sel, { weekday: true, year: false })}</T>{isSameDay(sel, today) && <Pressable onPress={() => router.push("/(tabs)/daily")}><T kind="label" color={t.lavDeep}>سجّلي</T></Pressable>}</Row>
@@ -74,6 +80,7 @@ export default function Calendar() {
 }
 function Legend({ c, l }: { c: string; l: string }) { return <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: c }} /><T kind="small">{l}</T></View>; }
 const s = StyleSheet.create({
+  arrowRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   nav: { width: 40, height: 40, padding: 0, borderRadius: 20, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   arrow: { paddingVertical: 8, paddingHorizontal: 12 },
   grid: { flexDirection: "row", flexWrap: "wrap", direction: "rtl" },

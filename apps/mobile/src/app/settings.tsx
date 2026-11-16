@@ -38,11 +38,11 @@ export default function Settings() {
         <Button title="احفظي" onPress={() => save({ wakeTime: wake, sleepTime: sleep })} busy={busy} disabled={!/^\d{2}:\d{2}$/.test(wake) || !/^\d{2}:\d{2}$/.test(sleep)} />
       </Glass>
       <Glass style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ flex: 1 }}><T kind="title">🌙 وضع رمضان</T><T kind="small">التذكيرات تصير وقت السحور والفطور.</T></View>
+        <View style={{ flex: 1 }}><T kind="title">وضع رمضان</T><T kind="small">التذكيرات تصير وقت السحور والفطور.</T></View>
         <Switch value={data.patient.ramadanMode} onValueChange={(v) => save({ ramadanMode: v })} trackColor={{ true: t.lav, false: t.lavSoft }} />
       </Glass>
       <Glass style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ flex: 1 }}><T kind="title">🔒 اسم الدوا بالتنبيه</T><T kind="small">مقفل: يطلع «تذكير من عيادتي 💜» بس. مفتوح: يطلع اسم الدوا.</T></View>
+        <View style={{ flex: 1 }}><T kind="title">اسم الدوا بالتنبيه</T><T kind="small">مقفل: يطلع «تذكير من عيادتي» بس. مفتوح: يطلع اسم الدوا.</T></View>
         <Switch value={data.patient.detailedNotifications} onValueChange={(v) => save({ detailedNotifications: v })} trackColor={{ true: t.lav, false: t.lavSoft }} />
       </Glass>
       {msg && <Glass><T kind="small" color={t.fg}>{msg}</T></Glass>}
