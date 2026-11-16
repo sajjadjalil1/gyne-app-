@@ -79,7 +79,7 @@ model Patient {
   ramadanMode    Boolean         @default(false)
   /// Lock-screen text stays generic unless the patient opts in
   detailedNotifications Boolean  @default(false)
-  /// Privacy: the policy version she agreed to in the app, and when
+  /// Privacy consent (unused: the in-app consent screen was removed; columns kept, no data in them)
   consentVersion String?
   consentedAt    DateTime?
   /// Soft delete: hidden everywhere and her login removed; erased for good by scripts/purge-deleted.ts after 30 days
