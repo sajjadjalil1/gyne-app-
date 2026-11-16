@@ -14,7 +14,6 @@ export type Pill = { pillNumber: number | null; inFree: boolean; freeFrom: strin
 
 export type Home = {
   patient: { id: string; name: string; firstName: string; phone: string; wakeTime: string; sleepTime: string; ramadanMode: boolean; detailedNotifications: boolean };
-  privacy: { version: string; accepted: boolean; consentedAt: string | null };
   clinic: { name: string; phone: string | null; address: string | null; mapsUrl: string | null; nurseHours: string | null; replyHours: number; erHospital: string | null; erMapsUrl: string | null; doctorName: string | null; missedPillOne: string | null; missedPillTwo: string | null; fastingAdvice: string | null };
   today: string;
   mode: "pregnancy" | "pill" | "cycle";

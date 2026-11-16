@@ -5,7 +5,7 @@ import { DELETE_GRACE_DAYS, PRIVACY_VERSION } from "@gyne/core";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "سياسة الخصوصية | عيادتي", description: "شلون نجمع معلومات المريضة ونحميها ونحذفها" };
 
-/** Public privacy policy: linked from the app's consent screen and needed by the App Store and Google Play. */
+/** Public privacy policy: linked from «أنا» in the app and needed by the App Store and Google Play. */
 export default async function PrivacyPage() {
   const clinic = await prisma.clinic.findFirst({ orderBy: { createdAt: "asc" }, select: { name: true, phone: true, address: true } }).catch(() => null);
   const name = clinic?.name ?? "العيادة";
@@ -54,16 +54,16 @@ export default async function PrivacyPage() {
             <li><b>تشوفين معلوماتچ:</b> كلها موجودة بالتطبيق، أو اطلبي نسخة من العيادة.</li>
             <li><b>تصححينها:</b> گولي للعيادة وتعدلها.</li>
             <li><b>تحذفين حسابچ:</b> من «أنا» ← «احذفي حسابي» بالتطبيق، أو اطلبيها من العيادة. ينقفل حسابچ فوراً، وتنمسح معلوماتچ نهائياً بعد {DELETE_GRACE_DAYS} يوم (المدة حتى نگدر نرجعها إذا صار غلط).</li>
-            <li><b>تسحبين موافقتچ:</b> بأي وقت، بنفس طريقة حذف الحساب.</li>
+            <li><b>توقفين استعمال معلوماتچ:</b> بأي وقت، بنفس طريقة حذف الحساب.</li>
           </ul>
         </Section>
 
         <Section title="الأطفال">
-          <p>التطبيق للمريضات البالغات. إذا عمر المريضة أقل من 18، وليّ أمرها يوافق ويا العيادة.</p>
+          <p>التطبيق للمريضات البالغات. إذا عمر المريضة أقل من 18، وليّ أمرها يتفق ويا العيادة.</p>
         </Section>
 
         <Section title="إذا تغيّرت هاي السياسة">
-          <p>نحدث رقم النسخة فوق، والتطبيق يطلب موافقتچ مرة ثانية قبل ما يكمل.</p>
+          <p>نحدث رقم النسخة فوق، ونبلغچ بالتطبيق إذا صار تغيير مهم.</p>
         </Section>
       </div>
     </main>

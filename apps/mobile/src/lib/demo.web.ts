@@ -71,8 +71,7 @@ export async function demoApi(path: string, init: RequestInit & { json?: unknown
   const now = new Date().toISOString();
 
   switch (`${method} ${route}`) {
-    case "GET /api/me": me.privacy ??= { version: "demo", accepted: false, consentedAt: null }; return me;
-    case "POST /api/consent": me.privacy = { version: body.version, accepted: true, consentedAt: now }; return { ok: true };
+    case "GET /api/me": return me;
     case "POST /api/account/delete": state.delete(globalThis.localStorage?.getItem("gyne.token")?.slice(TOKEN_PREFIX.length) ?? ""); return { ok: true };
     case "GET /api/logs": return p.logs;
     case "GET /api/messages": return p.messages;

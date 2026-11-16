@@ -16,12 +16,16 @@ updates:
       - dependency-name: "expo*"
       - dependency-name: "@expo/*"
       - dependency-name: "react-native*"
+      # React must match the version Expo/React Native ship with; it moves with the Expo SDK, by hand.
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "@types/react*"
     groups:
       server:
-        patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
+        patterns: ["next", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
       tooling:
         patterns: ["*"]
-        exclude-patterns: ["next", "react", "react-dom", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
+        exclude-patterns: ["next", "zod", "jose", "@prisma/*", "prisma", "date-fns", "qrcode", "eslint-config-next"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
