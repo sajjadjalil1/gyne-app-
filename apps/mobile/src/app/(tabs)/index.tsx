@@ -97,6 +97,14 @@ function PregnancyHome({ data }: { data: Home }) {
         </View>
       </Glass>
 
+      {p.ga.weeks >= 28 && (
+        <GlassPress onPress={() => router.push("/contractions")} style={{ flexDirection: "row", alignItems: "center", gap: 12 }} accessibilityLabel="مؤقت الطلق">
+          <View style={[s.soft, { backgroundColor: t.roseSoft, padding: 10 }]}><Icon name="clock" size={24} color={t.crit} /></View>
+          <View style={{ flex: 1 }}><T kind="title">مؤقت الطلق</T><T kind="small">تحسين بطلق؟ اضغطي ويا كل طلقة ونگلچ متى تروحين للمستشفى</T></View>
+          <Icon name="next" size={18} color={t.muted} />
+        </GlassPress>
+      )}
+
       {appt ? (
         <GlassPress onPress={() => router.push("/(tabs)/appointments")} style={{ backgroundColor: t.lav, borderColor: "transparent", gap: 4 }}>
           <Row><T kind="label" color={t.white}>موعدچ الجاي</T><T kind="label" color={t.white}>بعد {daysLabel(differenceInCalendarDays(d(appt.startsAt)!, new Date()))}</T></Row>

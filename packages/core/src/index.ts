@@ -6,3 +6,4 @@ export * from "./plain";
 export * from "./meds";
 export * from "./time";
 export * from "./privacy";
+export * from "./contractions";

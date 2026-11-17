@@ -89,7 +89,7 @@ export async function patientHome(patientId: string, now = new Date()) {
   const past = completed.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime()).slice(0, 5);
 
   return {
-    patient: { id: p.id, name: p.name, firstName: p.name.split(" ")[0], phone: p.phone, wakeTime: p.wakeTime, sleepTime: p.sleepTime, ramadanMode: p.ramadanMode, detailedNotifications: p.detailedNotifications },
+    patient: { id: p.id, name: p.name, firstName: p.name.split(" ")[0], phone: p.phone, wakeTime: p.wakeTime, sleepTime: p.sleepTime, ramadanMode: p.ramadanMode, detailedNotifications: p.detailedNotifications, para: p.para },
     clinic: { name: p.clinic.name, phone: p.clinic.phone, address: p.clinic.address, mapsUrl: p.clinic.mapsUrl, nurseHours: p.clinic.nurseHours, replyHours: p.clinic.replyHours, erHospital: p.clinic.erHospital, erMapsUrl: p.clinic.erMapsUrl, doctorName: doctor?.name ?? null, missedPillOne: p.clinic.missedPillOne, missedPillTwo: p.clinic.missedPillTwo, fastingAdvice: p.clinic.fastingAdvice },
     today: startOfDay(now),
     mode: preg ? "pregnancy" : pill ? "pill" : "cycle",

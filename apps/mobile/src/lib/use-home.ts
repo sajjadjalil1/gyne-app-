@@ -13,7 +13,7 @@ export type Visit = { id: string; type: string; startsAt: string; notes: string 
 export type Pill = { pillNumber: number | null; inFree: boolean; freeFrom: string | null; freeTo: string | null; nextPackAt: string; cycleStart: string; activeCount: number; packType: string; pillTime: string; takenToday: boolean; last7: boolean[]; packStartedAt: string };
 
 export type Home = {
-  patient: { id: string; name: string; firstName: string; phone: string; wakeTime: string; sleepTime: string; ramadanMode: boolean; detailedNotifications: boolean };
+  patient: { id: string; name: string; firstName: string; phone: string; wakeTime: string; sleepTime: string; ramadanMode: boolean; detailedNotifications: boolean; para?: number };
   clinic: { name: string; phone: string | null; address: string | null; mapsUrl: string | null; nurseHours: string | null; replyHours: number; erHospital: string | null; erMapsUrl: string | null; doctorName: string | null; missedPillOne: string | null; missedPillTwo: string | null; fastingAdvice: string | null };
   today: string;
   mode: "pregnancy" | "pill" | "cycle";

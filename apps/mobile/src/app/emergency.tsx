@@ -51,6 +51,7 @@ export default function Emergency() {
           </View>
           <T kind="h1" color={t.crit} style={{ fontSize: 28 }}>عندي مشكلة هسه</T>
           <T color={t.muted}>اختاري شنو صاير وياچ</T>
+          {list === DANGER_PREGNANCY && <Pressable onPress={() => router.push("/contractions")} style={[s.timer, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]} accessibilityRole="button"><Icon name="clock" size={20} color={t.lavDeep} /><T kind="label" color={t.lavDeep} style={{ flex: 1 }}>طلق بس، بدون ماي أو نزيف؟ افتحي مؤقت الطلق</T><Icon name="next" size={16} color={t.lavDeep} /></Pressable>}
           <TileGrid cols={2}>{list.map((x) => <Tile key={x.key} emoji={x.emoji} label={x.label} wide danger on={picked.includes(x.key)} onPress={() => setPicked((p) => (p.includes(x.key) ? p.filter((k) => k !== x.key) : [...p, x.key]))} style={{ minHeight: 76 }} />)}</TileGrid>
 
           <View style={[s.card, { backgroundColor: "rgba(255,255,255,0.75)", borderColor: er ? t.crit : t.glassLine }]}>
@@ -78,4 +79,5 @@ const s = StyleSheet.create({
   x: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   card: { borderRadius: 24, borderWidth: 1.5, padding: 16, gap: 10 },
   big: { paddingVertical: 18, borderRadius: 999, alignItems: "center" },
+  timer: { flexDirection: "row", alignItems: "center", gap: 8, padding: 12, borderRadius: 16, borderWidth: 1 },
 });
