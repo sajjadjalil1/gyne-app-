@@ -1,6 +1,6 @@
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
-export type IconName = "home" | "check" | "calendar" | "chat" | "user" | "phone" | "pin" | "bell" | "sound" | "back" | "next" | "lock" | "moon" | "alert" | "mic" | "camera" | "share" | "clock" | "x" | "pill" | "heart" | "send" | "stethoscope" | "note" | "hospital" | "baby" | "drop" | "sprout" | "info" | "tick" | "syringe";
+export type IconName = "home" | "check" | "calendar" | "chat" | "user" | "phone" | "pin" | "bell" | "sound" | "back" | "next" | "lock" | "moon" | "alert" | "mic" | "camera" | "share" | "clock" | "x" | "pill" | "heart" | "send" | "stethoscope" | "note" | "hospital" | "baby" | "drop" | "sprout" | "info" | "tick" | "syringe" | "play" | "pause" | "image";
 
 /** Real stroke icons (24-unit grid) so the tab bar and buttons don't rely on glyph fonts. */
 export function Icon({ name, size = 22, color = "#2a2440", stroke = 1.8 }: { name: IconName; size?: number; color?: string; stroke?: number }) {
@@ -37,6 +37,9 @@ export function Icon({ name, size = 22, color = "#2a2440", stroke = 1.8 }: { nam
       {name === "syringe" && <><Path d="m14 4 6 6M17 7l-9.5 9.5-3 .5.5-3L14.5 4.5" {...p} /><Path d="m9 12 3 3M4.5 19.5 7 17" {...p} /></>}
       {name === "tick" && <Path d="m5 12.5 4.5 4.5L19 7.5" {...p} />}
       {name === "info" && <><Circle cx={12} cy={12} r={9} {...p} /><Path d="M12 11v5.5M12 7.5v.5" {...p} /></>}
+      {name === "play" && <Path d="M8 5.5v13l10.5-6.5z" {...p} />}
+      {name === "pause" && <Path d="M8.5 5.5v13M15.5 5.5v13" {...p} />}
+      {name === "image" && <><Rect x={3.5} y={4.5} width={17} height={15} rx={3} {...p} /><Circle cx={9} cy={10} r={1.8} {...p} /><Path d="m4 17.5 5-4.5 4 3.5 3-2.5 4 3.5" {...p} /></>}
       {name === "heart" && <Path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" {...p} />}
     </Svg>
   );

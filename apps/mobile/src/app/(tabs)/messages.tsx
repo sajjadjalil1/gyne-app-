@@ -8,11 +8,14 @@ import { T } from "@/components/text";
 import { Icon } from "@/components/icon";
 import { Sos } from "@/components/sos";
 import { api, d } from "@/lib/api";
+import { ChatImage, Recorder, VoiceNote } from "@/components/chat-media";
+import { MEDIA_ONLY_BODY, pickPhoto, sendMedia, type Attachment } from "@/lib/media";
+import { DEMO } from "@/lib/demo";
 import { useHome } from "@/lib/use-home";
 import { useTheme } from "@/hooks/use-theme";
 import { Fonts } from "@/constants/theme";
 
-type Msg = { id: string; fromPatient: boolean; body: string; createdAt: string; auto: boolean; authorName: string | null; urgent: boolean; readAt: string | null };
+type Msg = { id: string; fromPatient: boolean; body: string; createdAt: string; auto: boolean; authorName: string | null; urgent: boolean; readAt: string | null; attachment?: Attachment | null };
 
 /** Chat with the nurse: who answers and when is always visible, every message gets a receipt, danger words escalate. */
 export default function Messages() {
@@ -26,6 +29,24 @@ export default function Messages() {
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const load = useCallback(() => api<{ messages: Msg[] }>("/api/messages").then((r) => setMsgs(r.messages)).catch(() => {}), []);
   useEffect(() => { load(); const id = setInterval(load, 20000); return () => clearInterval(id); }, [load]);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  type Sent = { urgent: boolean; escalate: boolean; bpHigh: boolean };
+  async function sendFile(kind: "IMAGE" | "AUDIO", uri: string, durationSec?: number) {
+    setBusy(true); setMediaError(null);
+    try {
+      const caption = kind === "IMAGE" ? text.trim() : "";
+      const r = await sendMedia<Sent>(kind, uri, { durationSec, caption });
+      if (caption) setText("");
+      if (r.escalate) setEscalate({ word: "كلمة خطر", bpHigh: r.bpHigh });
+      await load();
+    } catch (e) { setMediaError((e as Error).message); } finally { setBusy(false); }
+  }
+  async function photo(from: "camera" | "library") {
+    setAttachOpen(false);
+    try { const uri = await pickPhoto(from); if (uri) await sendFile("IMAGE", uri); } catch { setMediaError("ما گدرنا نفتح الصورة."); }
+  }
   async function send() {
     const body = text.trim();
     if (!body) return;
@@ -53,7 +74,9 @@ export default function Messages() {
             ) : (
               <View key={m.id} style={[s.bubble, { backgroundColor: m.fromPatient ? t.lav : t.glassStrong, borderColor: m.urgent ? t.crit : t.glassLine, alignSelf: m.fromPatient ? "flex-start" : "flex-end" }]}>
                 {!m.fromPatient && m.authorName && <T kind="label" color={t.lavDeep}>{m.authorName}</T>}
-                <T color={m.fromPatient ? t.white : t.fg}>{m.body}</T>
+                {m.attachment?.kind === "IMAGE" && <ChatImage id={m.attachment.id} />}
+                {m.attachment?.kind === "AUDIO" && <VoiceNote id={m.attachment.id} durationSec={m.attachment.durationSec} light={m.fromPatient} />}
+                {!(m.attachment && MEDIA_ONLY_BODY.includes(m.body)) && <T color={m.fromPatient ? t.white : t.fg}>{m.body}</T>}
                 <T kind="small" color={m.fromPatient ? "rgba(255,255,255,0.85)" : t.faint} style={{ fontSize: 11 }}>{relTime(d(m.createdAt)!)}{m.fromPatient ? (m.readAt ? " · شافتها الممرضة" : " · وصلت") : ""}</T>
               </View>
             ))}
@@ -68,10 +91,27 @@ export default function Messages() {
             {msgs.length === 0 && <T kind="small" style={{ textAlign: "center", marginTop: 40 }}>الممرضة تقرا رسالتچ وترد عليچ. إذا الأمر مستعجل اضغطي الزر الأحمر.</T>}
           </ScrollView>
           <View style={{ paddingHorizontal: 16, paddingBottom: 6 }}><Pressable onPress={() => router.push("/emergency")}><T kind="label" color={t.crit} style={{ textAlign: "center" }}>مستعجل؟ عندي مشكلة هسه</T></Pressable></View>
-          <View style={[s.composer, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}>
-            <TextInput value={text} onChangeText={setText} placeholder="اكتبي رسالتچ…" placeholderTextColor={t.faint} style={[s.input, { color: t.fg }]} multiline maxLength={1000} />
-            <Pressable onPress={send} disabled={busy || !text.trim()} style={[s.send, { backgroundColor: t.lav, opacity: busy || !text.trim() ? 0.5 : 1 }]} accessibilityLabel="إرسال"><Icon name="send" size={20} color={t.white} /></Pressable>
-          </View>
+          {mediaError && <T kind="small" color={t.crit} style={{ textAlign: "center", paddingHorizontal: 16, paddingBottom: 6 }}>{mediaError}</T>}
+          {attachOpen && !recording && (
+            <View style={[s.sheet, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}>
+              <Pressable onPress={() => photo("camera")} style={[s.sheetBtn, { backgroundColor: t.lavSoft }]} accessibilityRole="button"><Icon name="camera" size={22} color={t.lavDeep} /><T kind="label" color={t.lavDeep}>صوّري</T></Pressable>
+              <Pressable onPress={() => photo("library")} style={[s.sheetBtn, { backgroundColor: t.lavSoft }]} accessibilityRole="button"><Icon name="image" size={22} color={t.lavDeep} /><T kind="label" color={t.lavDeep}>من الصور</T></Pressable>
+              <T kind="small" style={{ flex: 1 }}>صورة تحليل، سونار، وصفة… تگدرين تكتبين كلمة وياها قبل لا تختارين.</T>
+            </View>
+          )}
+          {recording ? (
+            <Recorder onCancel={() => setRecording(false)} onDone={(uri, sec) => { setRecording(false); sendFile("AUDIO", uri, sec); }} />
+          ) : (
+            <View style={[s.composer, { backgroundColor: t.glassStrong, borderColor: t.glassLine }]}>
+              {!DEMO && <Pressable onPress={() => setAttachOpen((v) => !v)} disabled={busy} style={[s.tool, { backgroundColor: attachOpen ? t.lavSoft : "transparent" }]} accessibilityLabel="دزي صورة"><Icon name="camera" size={22} color={t.lavDeep} /></Pressable>}
+              <TextInput value={text} onChangeText={setText} placeholder="اكتبي رسالتچ…" placeholderTextColor={t.faint} style={[s.input, { color: t.fg }]} multiline maxLength={1000} />
+              {text.trim() || DEMO ? (
+                <Pressable onPress={send} disabled={busy || !text.trim()} style={[s.send, { backgroundColor: t.lav, opacity: busy || !text.trim() ? 0.5 : 1 }]} accessibilityLabel="إرسال"><Icon name="send" size={20} color={t.white} /></Pressable>
+              ) : (
+                <Pressable onPress={() => { setAttachOpen(false); setMediaError(null); setRecording(true); }} disabled={busy} style={[s.send, { backgroundColor: t.lav, opacity: busy ? 0.5 : 1 }]} accessibilityLabel="سجّلي رسالة صوتية"><Icon name="mic" size={20} color={t.white} /></Pressable>
+              )}
+            </View>
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Background>
@@ -89,4 +129,7 @@ const s = StyleSheet.create({
   composer: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginHorizontal: 16, marginBottom: 96, padding: 8, borderRadius: 24, borderWidth: 1 },
   input: { flex: 1, fontFamily: Fonts.regular, fontSize: 15.5, paddingHorizontal: 10, paddingVertical: 8, maxHeight: 120, textAlign: "right" },
   send: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
+  tool: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
+  sheet: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 16, marginBottom: 8, padding: 10, borderRadius: 20, borderWidth: 1 },
+  sheetBtn: { alignItems: "center", gap: 4, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 16 },
 });

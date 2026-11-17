@@ -12,7 +12,20 @@
     "staff:reset-login": "tsx scripts/reset-staff-login.ts",
     "patients:purge": "tsx scripts/purge-deleted.ts"
   },
-  "prisma": { "seed": "tsx prisma/seed.ts" },
-  "dependencies": { "@prisma/client": "6.19.3", "@gyne/core": "*" },
-  "devDependencies": { "prisma": "6.19.3", "tsx": "4.20.5" }
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@gyne/core": "*",
+    "@prisma/client": "6.19.3",
+    "aws4fetch": "1.0.20"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3",
+    "tsx": "4.20.5"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./storage": "./src/storage.ts"
+  }
 }

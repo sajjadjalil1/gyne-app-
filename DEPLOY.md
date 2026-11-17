@@ -70,3 +70,18 @@ Access tokens) saved as the repository secret `EXPO_TOKEN`.
 - Only JavaScript changes travel this way. A new permission, native library, icon or splash needs a new build;
   the fingerprint runtime version keeps such an update away from builds that cannot run it.
 - The app never waits for the network on start, so the emergency screen opens instantly even offline.
+
+## Photos and voice notes in the chat
+
+Patients can send a photo (lab result, scan, prescription) or a voice note of up to 3 minutes. The server checks
+the real file type from its first bytes, the size (photo 5 MB, voice 4 MB) and a daily count (30), and serves each
+file only to that patient and to the clinic's doctors and nurses (reception does not see them). Every staff view is
+in the audit log.
+
+- **Now (interim):** files are kept in the database, up to `MEDIA_DB_MAX_MB` (default 300 MB) in total; after that
+  new uploads are refused with a plain message. The app shrinks photos to about 300 KB, so that is roughly a
+  thousand photos.
+- **Later (planned):** a private Cloudflare R2 bucket. Create the bucket (no public access) and an API token with
+  read/write on it, then set `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` on Render. New
+  files go to the bucket; earlier ones stay readable from the database.
+- The purge script also removes the bucket files of patients deleted more than 30 days ago.
