@@ -33,6 +33,9 @@ services:
       # When SMS_WEBHOOK_URL is set, delete this variable in the Render dashboard.
       - key: OTP_DELIVERY
         value: log
+      # Optional: with "enhanced push security" switched on in the Expo account, pushes need this token.
+      # - key: EXPO_ACCESS_TOKEN
+      #   sync: false
       # Fill in when an SMS/WhatsApp gateway is chosen.
       # - key: SMS_WEBHOOK_URL
       #   sync: false

@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { d } from "@/lib/api";
 import { saveClinic } from "@/lib/clinic-cache";
 import { ensurePermission, syncReminders } from "@/lib/reminders";
+import { pushAvailable, registerPush } from "@/lib/push";
 
 function greeting() { const h = new Date().getHours(); return h < 12 ? "صباح الخير" : h < 18 ? "مساء الخير" : "مساء الخير"; }
 
@@ -25,6 +26,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { data, loading, error, reload } = useHome();
   useEffect(() => { if (!data) return; saveClinic(data); (async () => { if (data.meds.length || data.contraception?.pill) { if (await ensurePermission()) syncReminders(data); } })(); }, [data]);
+  // Clinic replies arrive as notifications: ask once, then register this phone with the server (every start, cheap).
+  const signedIn = !!data;
+  useEffect(() => { if (signedIn && pushAvailable()) ensurePermission().then((ok) => { if (ok) registerPush(); }); }, [signedIn]);
   const today = startOfDay(new Date());
 
   return (

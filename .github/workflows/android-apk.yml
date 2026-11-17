@@ -25,6 +25,8 @@ jobs:
     env:
       EXPO_PUBLIC_API_URL: https://ayadati-api.onrender.com
       NODE_ENV: production
+      # Push notifications: the Expo project id (repository variable) and Firebase's google-services.json (secret).
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +44,17 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Firebase file for push notifications
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > apps/mobile/google-services.json
+            echo "GOOGLE_SERVICES_FILE=./google-services.json" >> "$GITHUB_ENV"
+          else
+            echo "::notice::GOOGLE_SERVICES_JSON is not set: this APK will not receive push notifications."
+          fi
 
       - name: Generate Android project
         working-directory: apps/mobile

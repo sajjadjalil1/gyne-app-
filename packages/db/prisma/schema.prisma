@@ -55,6 +55,21 @@ model User {
   failedLogins   Int       @default(0)
   lockedUntil    DateTime?
   disabledAt     DateTime? // set by the doctor when a staff member leaves: no login, no session
+  pushTokens     PushToken[]
+}
+
+/// One phone that can receive push notifications (Expo push token). Removed on logout, account deletion,
+/// or when Expo says the app was uninstalled.
+model PushToken {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Patient {

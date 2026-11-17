@@ -16,6 +16,7 @@ export async function softDeletePatient(patientId: string, by: { actorId: string
     if (p.userId) {
       await tx.user.update({ where: { id: p.userId }, data: { disabledAt: now, phone: `deleted:${p.userId}` } });
       await tx.session.updateMany({ where: { userId: p.userId, revokedAt: null }, data: { revokedAt: now } });
+      await tx.pushToken.deleteMany({ where: { userId: p.userId } });
     }
     await tx.appointment.updateMany({ where: { patientId: p.id, status: "SCHEDULED", startsAt: { gte: now } }, data: { status: "CANCELLED" } });
   });

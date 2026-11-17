@@ -29,7 +29,7 @@ async function main() {
       prisma.appointment.deleteMany({ where }),
       prisma.patient.delete({ where: { id: p.id } }),
       prisma.otpCode.deleteMany({ where: { phone: p.phone } }),
-      ...(p.userId ? [prisma.session.deleteMany({ where: { userId: p.userId } }), prisma.user.delete({ where: { id: p.userId } })] : []),
+      ...(p.userId ? [prisma.pushToken.deleteMany({ where: { userId: p.userId } }), prisma.session.deleteMany({ where: { userId: p.userId } }), prisma.user.delete({ where: { id: p.userId } })] : []),
       prisma.auditLog.create({ data: { action: "patient.purge", target: p.id, meta: JSON.stringify({ by: "cli" }) } }),
     ]);
     console.log(`erased ${p.id}`);

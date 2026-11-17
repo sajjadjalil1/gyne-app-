@@ -42,3 +42,18 @@ npx eas-cli build --profile preview --platform android   # APK for testers
 npx eas-cli build --profile production --platform all
 npx eas-cli submit --profile production --platform all   # needs the store credentials in eas.json
 ```
+
+## Push notifications (clinic → patient phone)
+
+The server sends through Expo's free push service; no server setting is needed. The app needs three things once:
+
+1. A free Expo account (expo.dev) with a project for the app. Put its **project id** in the repository as an
+   Actions *variable* named `EAS_PROJECT_ID` (Settings → Secrets and variables → Actions → Variables).
+2. **Android:** a free Firebase project with an Android app `com.gyne.clinic`. Put the downloaded
+   `google-services.json` (its whole text) in a repository *secret* named `GOOGLE_SERVICES_JSON`, and upload the
+   Firebase service-account key to the Expo project (Credentials → Android → FCM V1).
+3. **iPhone:** the Apple push key, which comes with the Apple Developer account (Expo can create it during the
+   first iOS build).
+
+Until then the app works the same and the patient sees replies when she opens it. The dashboard shows next to
+«الرسائل» whether a patient's phone gets notifications.

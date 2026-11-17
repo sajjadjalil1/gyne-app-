@@ -8,6 +8,7 @@ import type { Role } from "@gyne/db";
 import { requireStaff } from "@/lib/api";
 import { audit } from "@/lib/auth";
 import { softDeletePatient } from "@/lib/patient-account";
+import { notifyPatient } from "@/lib/push";
 import { CLINICAL, PRESCRIBERS } from "@/lib/roles";
 
 /** The patient must belong to the caller's clinic and the caller's role must be allowed; anything else is a silent no-op. */
@@ -27,8 +28,10 @@ export async function replyToPatient(formData: FormData) {
   // A double click or a resent form must not post the same reply twice.
   const dup = await prisma.message.findFirst({ where: { patientId, fromPatient: false, body, createdAt: { gte: new Date(Date.now() - 30_000) } } });
   if (dup) return;
-  await prisma.message.create({ data: { patientId, fromPatient: false, body, authorName: ctx.user.name } });
-  await audit("message.reply", { actorId: ctx.user.id, target: patientId });
+  const m = await prisma.message.create({ data: { patientId, fromPatient: false, body, authorName: ctx.user.name } });
+  // The reply is saved first; the push only tells her phone to look. A failed push never loses the reply.
+  const phones = await notifyPatient(patientId, "message", `${ctx.user.name}: ${body}`, m.id);
+  await audit("message.reply", { actorId: ctx.user.id, target: patientId, meta: { pushed: phones } });
   revalidatePath(`/doctor/patients/${patientId}`);
 }
 
@@ -107,7 +110,12 @@ export async function setAppointmentPrep(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const ctx = await ownPatient(patientId);
   if (!ctx) return;
-  await prisma.appointment.updateMany({ where: { id, patientId }, data: { prep: String(formData.get("prep") ?? "").trim() || null, place: String(formData.get("place") ?? "").trim() || null } });
+  const prep = String(formData.get("prep") ?? "").trim() || null, place = String(formData.get("place") ?? "").trim() || null;
+  const before = await prisma.appointment.findFirst({ where: { id, patientId } });
+  if (!before) return;
+  await prisma.appointment.update({ where: { id: before.id }, data: { prep, place } });
+  // Tell her only when something she has to do or where she has to go actually changed.
+  if ((prep && prep !== before.prep) || (place && place !== before.place)) await notifyPatient(patientId, "appointment", prep ? `قبل موعدچ: ${prep}` : `مكان موعدچ: ${place}`, before.id);
   revalidatePath(`/doctor/patients/${patientId}`);
 }
 

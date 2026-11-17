@@ -34,6 +34,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   });
   if (!p) notFound();
   await audit("patient.view", { actorId: user.id, target: p.id });
+  const phones = p.userId ? await prisma.pushToken.count({ where: { userId: p.userId } }) : 0;
   await prisma.message.updateMany({ where: { patientId: p.id, fromPatient: true, readAt: null }, data: { readAt: now } });
 
   const alerts = deriveAlerts({ ...p, messages: p.messages }, now);
@@ -172,7 +173,10 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         </div>
 
         <aside className="glass-lg p-5 lg:sticky lg:top-4">
-          <h2 className="font-semibold mb-3">الرسائل</h2>
+          <div className="flex items-baseline justify-between gap-2 mb-3">
+            <h2 className="font-semibold">الرسائل</h2>
+            <span className={`text-xs ${phones ? "text-ok" : "text-faint"}`} title={phones ? "كل رد يوصلها إشعار على التلفون" : "تشوف الرد لما تفتح التطبيق"}>{phones ? "🔔 يوصلها إشعار" : "الإشعارات مو مفعّلة عندها"}</span>
+          </div>
           <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
             {[...p.messages].filter((m) => !(m.auto && !m.fromPatient)).reverse().map((m) => <div key={m.id} className={`rounded-2xl p-3 text-sm ${m.fromPatient ? (m.urgent ? "bg-crit/15 border border-crit/40" : "bg-rose-soft") : "bg-lav-soft"}`}>{m.urgent && <span className="tag bg-crit mb-1">عاجل</span>}{m.body}<div className="text-[10px] text-faint mt-1">{m.authorName ? `${m.authorName} · ` : ""}{relTime(m.createdAt, now)}</div></div>)}
             {p.messages.length === 0 && <p className="text-faint text-sm">لا رسائل بعد.</p>}
