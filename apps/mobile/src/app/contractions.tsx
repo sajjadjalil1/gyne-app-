@@ -62,7 +62,7 @@ export default function Contractions() {
 
       <View style={{ alignItems: "center", gap: 10, paddingVertical: 6 }}>
         <Pressable onPress={tap} accessibilityRole="button" accessibilityLabel={running ? "خلصت الطلقة" : "بدأت الطلقة"}
-          style={({ pressed }) => [s.big, { backgroundColor: running ? t.rose : t.lav, borderColor: running ? t.crit : t.lavSoft, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
+          style={({ pressed }) => [s.big, { backgroundColor: running ? t.crit : t.lav, borderColor: running ? t.roseSoft : t.lavSoft, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
           <T kind="title" color={t.white} style={{ textAlign: "center", fontSize: 22, lineHeight: 30 }}>{running ? "خلصت الطلقة" : "بدأت الطلقة"}</T>
           {running ? <T kind="big" color={t.white}>{fmtClock(now - running.start)}</T> : <T kind="small" color="rgba(255,255,255,0.9)" style={{ textAlign: "center" }}>اضغطي أول ما تبدي</T>}
         </Pressable>
