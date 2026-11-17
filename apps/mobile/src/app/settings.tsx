@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
+import * as Updates from "expo-updates";
+import { fmtDate } from "@gyne/core";
 import { Screen, Row } from "@/components/screen";
 import { Glass } from "@/components/glass";
 import { Button } from "@/components/button";
@@ -42,10 +45,12 @@ export default function Settings() {
         <Switch value={data.patient.ramadanMode} onValueChange={(v) => save({ ramadanMode: v })} trackColor={{ true: t.lav, false: t.lavSoft }} />
       </Glass>
       <Glass style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ flex: 1 }}><T kind="title">اسم الدوا بالتنبيه</T><T kind="small">مقفل: يطلع «تذكير من عيادتي» بس. مفتوح: يطلع اسم الدوا.</T></View>
+        <View style={{ flex: 1 }}><T kind="title">التفاصيل بالتنبيه</T><T kind="small">مقفل: يطلع «تذكير من عيادتي» أو «رسالة من العيادة» بس. مفتوح: يطلع اسم الدوا ونص الرسالة.</T></View>
         <Switch value={data.patient.detailedNotifications} onValueChange={(v) => save({ detailedNotifications: v })} trackColor={{ true: t.lav, false: t.lavSoft }} />
       </Glass>
       {msg && <Glass><T kind="small" color={t.fg}>{msg}</T></Glass>}
+      {/* Which copy of the app is running: the store build, or an over-the-air update published on a given day. */}
+      <T kind="small" style={{ textAlign: "center" }}>نسخة التطبيق {Constants.expoConfig?.version ?? ""}{Updates.isEnabled && !Updates.isEmbeddedLaunch && Updates.createdAt ? ` · تحديث ${fmtDate(Updates.createdAt, { year: false })}` : ""}</T>
     </Screen>
   );
 }
