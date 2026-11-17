@@ -5,6 +5,7 @@
  * Removes every health record of those patients and her login. The audit log keeps only ids, no health data.
  */
 import { PrismaClient } from "@prisma/client";
+import { deleteObject } from "../src/storage";
 
 const GRACE_DAYS = 30; // keep in step with DELETE_GRACE_DAYS in packages/core/src/privacy.ts
 const prisma = new PrismaClient();
@@ -16,6 +17,9 @@ async function main() {
   if (!process.argv.includes("--yes") || due.length === 0) return;
   for (const p of due) {
     const where = { patientId: p.id };
+    // Chat photos and voice notes kept in the bucket go first (rows in the database go with their messages).
+    const files = await prisma.attachment.findMany({ where: { patientId: p.id, storage: "s3" }, select: { key: true } });
+    for (const f of files) if (f.key) await deleteObject(f.key);
     await prisma.$transaction([
       prisma.doseEvent.deleteMany({ where }),
       prisma.prescription.deleteMany({ where }),

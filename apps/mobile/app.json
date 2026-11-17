@@ -56,6 +56,21 @@
         {
           "color": "#8b5fbf"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "حتى تگدرين تدزين صورة تحليل أو وصفة للعيادة من صورچ.",
+          "cameraPermission": "حتى تگدرين تصورين تحليل أو وصفة وتدزيها للعيادة.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "حتى تگدرين تسجلين رسالة صوتية للعيادة.",
+          "recordAudioAndroid": true
+        }
       ]
     ],
     "experiments": {

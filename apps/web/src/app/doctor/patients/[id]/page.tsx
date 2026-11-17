@@ -21,7 +21,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     where: { id, clinicId: user.clinicId, deletedAt: null },
     include: {
       readings: { orderBy: { takenAt: "desc" }, take: 40 },
-      messages: { orderBy: { createdAt: "desc" }, take: 20 },
+      messages: { orderBy: { createdAt: "desc" }, take: 20, include: { attachment: { select: { id: true, kind: true, durationSec: true } } } },
       contraceptions: { orderBy: { startedAt: "desc" } },
       pregnancies: { orderBy: { createdAt: "desc" } },
       cycleLogs: { where: { date: { gte: subDays(now, 200) } }, orderBy: { date: "asc" } },
@@ -178,7 +178,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             <span className={`text-xs ${phones ? "text-ok" : "text-faint"}`} title={phones ? "كل رد يوصلها إشعار على التلفون" : "تشوف الرد لما تفتح التطبيق"}>{phones ? "🔔 يوصلها إشعار" : "الإشعارات مو مفعّلة عندها"}</span>
           </div>
           <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
-            {[...p.messages].filter((m) => !(m.auto && !m.fromPatient)).reverse().map((m) => <div key={m.id} className={`rounded-2xl p-3 text-sm ${m.fromPatient ? (m.urgent ? "bg-crit/15 border border-crit/40" : "bg-rose-soft") : "bg-lav-soft"}`}>{m.urgent && <span className="tag bg-crit mb-1">عاجل</span>}{m.body}<div className="text-[10px] text-faint mt-1">{m.authorName ? `${m.authorName} · ` : ""}{relTime(m.createdAt, now)}</div></div>)}
+            {[...p.messages].filter((m) => !(m.auto && !m.fromPatient)).reverse().map((m) => <div key={m.id} className={`rounded-2xl p-3 text-sm ${m.fromPatient ? (m.urgent ? "bg-crit/15 border border-crit/40" : "bg-rose-soft") : "bg-lav-soft"}`}>{m.urgent && <span className="tag bg-crit mb-1">عاجل</span>}{m.attachment?.kind === "IMAGE" && <a href={`/api/media/${m.attachment.id}`} target="_blank" rel="noopener" className="block mb-1"><img src={`/api/media/${m.attachment.id}`} alt="صورة من المريضة" loading="lazy" className="rounded-xl max-h-64 w-auto" /></a>}{m.attachment?.kind === "AUDIO" && <audio controls preload="none" src={`/api/media/${m.attachment.id}`} className="w-full mb-1" />}{m.attachment && (m.body === "📷 صورة" || m.body === "🎤 رسالة صوتية") ? null : m.body}{m.attachment?.durationSec ? <span className="text-[10px] text-faint num"> {Math.floor(m.attachment.durationSec / 60)}:{String(m.attachment.durationSec % 60).padStart(2, "0")}</span> : null}<div className="text-[10px] text-faint mt-1">{m.authorName ? `${m.authorName} · ` : ""}{relTime(m.createdAt, now)}</div></div>)}
             {p.messages.length === 0 && <p className="text-faint text-sm">لا رسائل بعد.</p>}
           </div>
           <ReplyForm patientId={p.id} action={replyToPatient} />

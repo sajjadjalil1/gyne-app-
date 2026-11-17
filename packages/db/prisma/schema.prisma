@@ -362,6 +362,36 @@ model Message {
   urgent      Boolean  @default(false)
   readAt      DateTime?
   createdAt   DateTime @default(now())
+  attachment  Attachment?
+}
+
+enum AttachmentKind {
+  IMAGE
+  AUDIO
+}
+
+/// A photo (lab result, rash, prescription) or a voice note sent in the chat. One per message.
+/// Stored in S3-compatible object storage (Cloudflare R2) when S3_BUCKET is set; until then, in this table (`data`).
+model Attachment {
+  id          String         @id @default(cuid())
+  messageId   String         @unique
+  message     Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  /// Copied from the message so the purge script and the size checks need no join
+  patientId   String
+  kind        AttachmentKind
+  /// Worked out from the file's first bytes on the server, never taken from the phone
+  mime        String
+  size        Int
+  durationSec Int?
+  /// "db" or "s3"
+  storage     String
+  /// Object key in the bucket when storage = "s3"
+  key         String?
+  data        Bytes?
+  sha256      String
+  createdAt   DateTime       @default(now())
+
+  @@index([patientId])
 }
 
 enum Severity {
