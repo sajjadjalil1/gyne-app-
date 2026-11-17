@@ -34,6 +34,7 @@ function Gate() {
       <Stack.Screen name="week" options={{ presentation: "card", animation: "slide_from_right" }} />
       <Stack.Screen name="calendar" options={{ presentation: "card", animation: "slide_from_right" }} />
       <Stack.Screen name="settings" options={{ presentation: "card", animation: "slide_from_right" }} />
+      <Stack.Screen name="contractions" options={{ presentation: "card", animation: "slide_from_right" }} />
     </Stack>
   );
 }
