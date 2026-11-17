@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, getToken, setToken } from "./api";
+import { unregisterPush } from "./push";
 
 type User = { id: string; name: string; role: string; patientId: string | null };
 type Ctx = { ready: boolean; user: User | null; signIn: (token: string, user: User) => Promise<void>; signOut: () => Promise<void> };
@@ -19,7 +20,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
   const signIn = useCallback(async (token: string, u: User) => { await setToken(token); setUser(u); }, []);
-  const signOut = useCallback(async () => { try { await api("/api/auth/logout", { method: "POST" }); } catch {} await setToken(null); setUser(null); }, []);
+  const signOut = useCallback(async () => { await unregisterPush(); try { await api("/api/auth/logout", { method: "POST" }); } catch {} await setToken(null); setUser(null); }, []);
   const value = useMemo(() => ({ ready, user, signIn, signOut }), [ready, user, signIn, signOut]);
   return <SessionCtx.Provider value={value}>{children}</SessionCtx.Provider>;
 }

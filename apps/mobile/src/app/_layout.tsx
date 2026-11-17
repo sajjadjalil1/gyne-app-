@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts, IBMPlexSansArabic_400Regular, IBMPlexSansArabic_500Medium, IBMPlexSansArabic_600SemiBold, IBMPlexSansArabic_700Bold } from "@expo-google-fonts/ibm-plex-sans-arabic";
 import { SessionProvider, useSession } from "@/lib/session";
 import { listenForActions, setupNotifications } from "@/lib/reminders";
+import { listenForPushTaps } from "@/lib/push";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,7 @@ function Gate() {
     if (user && inAuth) router.replace("/(tabs)");
   }, [ready, user, segments, router]);
   useEffect(() => { setupNotifications(); return listenForActions(() => {}); }, []);
+  useEffect(() => (user ? listenForPushTaps((path) => router.push(path)) : undefined), [user, router]);
   return (
     <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
       <Stack.Screen name="emergency" options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }} />
