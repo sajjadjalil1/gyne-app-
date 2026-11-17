@@ -6,7 +6,7 @@
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
     "@expo/ui": "~58.0.21",
     "@gyne/core": "*",
-    "date-fns": "4.1.0",
+    "date-fns": "4.4.0",
     "expo": "~58.0.16",
     "expo-audio": "~58.0.12",
     "expo-blur": "~58.0.5",
