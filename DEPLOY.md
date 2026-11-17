@@ -57,3 +57,16 @@ The server sends through Expo's free push service; no server setting is needed. 
 
 Until then the app works the same and the patient sees replies when she opens it. The dashboard shows next to
 «الرسائل» whether a patient's phone gets notifications.
+
+## Over-the-air app updates (a screen fix the same day, no store review)
+
+Needs the same Expo project as push notifications, plus an Expo **access token** (expo.dev → Account settings →
+Access tokens) saved as the repository secret `EXPO_TOKEN`.
+
+- Test APKs listen to the `preview` channel; store builds to `production`.
+- To send a fix: GitHub → Actions → **App update (over the air)** → Run workflow. Send to `preview` first, open the
+  test APK twice (the first start downloads, the second shows it), check it, then run again with `production`.
+- The workflow runs the type check and tests first; if they fail, nothing is sent.
+- Only JavaScript changes travel this way. A new permission, native library, icon or splash needs a new build;
+  the fingerprint runtime version keeps such an update away from builds that cannot run it.
+- The app never waits for the network on start, so the emergency screen opens instantly even offline.

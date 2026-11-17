@@ -8,11 +8,13 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "android": { "buildType": "apk" },
       "env": { "EXPO_PUBLIC_API_URL": "https://ayadati-api.onrender.com" }
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "env": { "EXPO_PUBLIC_API_URL": "https://ayadati-api.onrender.com" }
     }
   },

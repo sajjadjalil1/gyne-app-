@@ -1,0 +1,55 @@
+# Sends a fix to the patient app over the air (screens, wording, app logic), without a new store release.
+# Run it by hand: Actions → "App update (over the air)" → Run workflow → pick the channel and write what changed.
+#   preview    = only the test APKs. Always send here first and check on a test phone.
+#   production = every patient's phone (store builds), from their next app start.
+# Changes to native parts (a new permission, a new native library, the app icon) cannot go this way; they need a
+# new build. The "fingerprint" runtime version makes sure such an update is never offered to a build that cannot run it.
+name: App update (over the air)
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Who gets it"
+        type: choice
+        options: [preview, production]
+        default: preview
+      message:
+        description: "What changed (shown in the Expo dashboard)"
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: app-update-${{ inputs.channel }}
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_UPDATES_CHANNEL: ${{ inputs.channel }}
+      EXPO_PUBLIC_API_URL: https://ayadati-api.onrender.com
+      NODE_ENV: production
+    steps:
+      - name: Check the Expo settings
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EAS_PROJECT_ID" ]; then
+            echo "::error::Set the EXPO_TOKEN secret and the EAS_PROJECT_ID variable first (see DEPLOY.md)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # The same checks as every pull request: a broken update must never reach a patient's phone.
+      - run: npx prisma generate --schema packages/db/prisma/schema.prisma
+      - run: npm run typecheck
+      - run: npm test
+      - name: Publish the update
+        working-directory: apps/mobile
+        env:
+          MESSAGE: ${{ inputs.message }}
+        run: npx --yes eas-cli@27.2.0 update --channel "$EXPO_UPDATES_CHANNEL" --message "$MESSAGE" --platform all --non-interactive

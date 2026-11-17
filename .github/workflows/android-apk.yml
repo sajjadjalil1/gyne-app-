@@ -27,6 +27,8 @@ jobs:
       NODE_ENV: production
       # Push notifications: the Expo project id (repository variable) and Firebase's google-services.json (secret).
       EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      # Test APKs take over-the-air updates from the "preview" channel only; patients' store builds use "production".
+      EXPO_UPDATES_CHANNEL: preview
     steps:
       - uses: actions/checkout@v4
 
